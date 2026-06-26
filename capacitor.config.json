@@ -1,0 +1,12 @@
+{
+  "appId": "com.rheumcompanion.app",
+  "appName": "RheumCompanion",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#0a0e1a"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
