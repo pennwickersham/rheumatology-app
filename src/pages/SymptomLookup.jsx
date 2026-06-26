@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { diseases } from '../data/diseases';
 import { medications, getMedicationById } from '../data/medications';
+import { Icon } from '../components/Icons';
 
 export default function SymptomLookup() {
   const [selectedDiseases, setSelectedDiseases] = useState([]);
@@ -82,67 +83,75 @@ export default function SymptomLookup() {
   }, [symptomQuery, selectedDiseases, selectedMeds]);
 
   return (
-    <div className="page-enter">
+    <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)' }}>
       <div className="section-header">
-        <h1 className="section-header__title">Symptom Lookup</h1>
+        <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)' }}>Symptom Checker</h1>
         <p className="section-header__subtitle">
-          Is it a disease symptom or medication side effect?
+          Is it a disease flare or a medication side effect?
         </p>
       </div>
 
-      <div className="disclaimer">
-        <span className="disclaimer__icon">💡</span>
-        Select your condition(s) and medication(s), then search for a symptom to find out if it's related to your disease, your medication, or both.
+      <div className="disclaimer stagger-item" style={{ marginBottom: 'var(--space-xl)' }}>
+        <div className="disclaimer__icon">
+          <Icon name="info" size={20} color="var(--warning)" />
+        </div>
+        <div>
+          Select your conditions and medications, then search for a symptom to see how it correlates with your medical profile.
+        </div>
       </div>
 
       {/* Disease Selection */}
-      <div className="section-header" style={{ marginBottom: 'var(--space-sm)' }}>
-        <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)' }}>
-          1. Select Your Condition(s)
+      <div className="section-header stagger-item" style={{ marginBottom: 'var(--space-md)' }}>
+        <h2 className="section-header__title" style={{ fontSize: 'var(--font-base)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+          1. Your Conditions
         </h2>
       </div>
-      <div className="multi-select">
+      <div className="multi-select stagger-item">
         {diseases.map(d => (
           <button
             key={d.id}
             className={`multi-select__item ${selectedDiseases.includes(d.id) ? 'selected' : ''}`}
             onClick={() => toggleDisease(d.id)}
           >
-            {d.icon} {d.shortName}
+            <Icon name={d.icon} size={16} />
+            {d.shortName}
           </button>
         ))}
       </div>
 
       {/* Medication Selection */}
-      <div className="section-header" style={{ marginBottom: 'var(--space-sm)' }}>
-        <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)' }}>
-          2. Select Your Medication(s)
+      <div className="section-header stagger-item" style={{ marginBottom: 'var(--space-md)' }}>
+        <h2 className="section-header__title" style={{ fontSize: 'var(--font-base)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+          2. Your Medications
         </h2>
       </div>
-      <div className="multi-select">
+      <div className="multi-select stagger-item">
         {relevantMeds.map(m => (
           <button
             key={m.id}
             className={`multi-select__item ${selectedMeds.includes(m.id) ? 'selected' : ''}`}
             onClick={() => toggleMed(m.id)}
           >
-            {m.icon} {m.genericName}
+            <Icon name={m.icon} size={16} />
+            {m.genericName}
           </button>
         ))}
       </div>
 
       {/* Symptom Search */}
-      <div className="section-header" style={{ marginBottom: 'var(--space-sm)' }}>
-        <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)' }}>
-          3. Describe Your Symptom
+      <div className="section-header stagger-item" style={{ marginBottom: 'var(--space-md)' }}>
+        <h2 className="section-header__title" style={{ fontSize: 'var(--font-base)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
+          3. Describe Symptom
         </h2>
       </div>
-      <div className="search-bar">
-        <span className="search-bar__icon">🔍</span>
+      <div className="search-bar stagger-item" style={{ marginBottom: 'var(--space-2xl)' }}>
+        <span className="search-bar__icon">
+          <Icon name="search" size={18} />
+        </span>
         <input
           className="search-bar__input"
           type="text"
-          placeholder="e.g., nausea, joint pain, rash, fatigue..."
+          placeholder="e.g. nausea, joint pain, rash..."
           value={symptomQuery}
           onChange={e => setSymptomQuery(e.target.value)}
           disabled={selectedDiseases.length === 0 && selectedMeds.length === 0}
@@ -151,85 +160,98 @@ export default function SymptomLookup() {
 
       {/* Instructions */}
       {(selectedDiseases.length === 0 && selectedMeds.length === 0) && (
-        <div className="empty-state">
-          <div className="empty-state__icon">☝️</div>
-          <div className="empty-state__text">Select at least one condition or medication to start.</div>
+        <div className="empty-state stagger-item">
+          <div className="empty-state__icon">
+            <Icon name="activity" size={48} />
+          </div>
+          <div className="empty-state__text">Select at least one condition or medication above to begin the analysis.</div>
         </div>
       )}
 
       {/* Results */}
       {results && symptomQuery.trim() && (
-        <div>
+        <div style={{ marginBottom: 'var(--space-3xl)' }}>
           {results.hasBoth && (
-            <div className="symptom-result symptom-result--both" style={{ marginBottom: 'var(--space-lg)' }}>
+            <div className="symptom-result symptom-result--both stagger-item" style={{ marginBottom: 'var(--space-xl)' }}>
               <div className="symptom-result__source" style={{ color: 'var(--warning)' }}>
-                ⚠️ Could Be Both
+                <Icon name="alert-triangle" size={14} />
+                Overlapping Symptom
               </div>
-              <div className="symptom-result__text">
-                This symptom appears in both your disease symptom list AND as a medication side effect.
-                Discuss with your rheumatologist to determine the likely cause.
+              <div className="symptom-result__text" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                This symptom is listed as both a disease symptom AND a medication side effect. Discuss this overlap with your rheumatologist.
               </div>
             </div>
           )}
 
           {results.diseaseMatches.length > 0 && (
-            <>
+            <div className="stagger-item" style={{ marginBottom: 'var(--space-xl)' }}>
               <h3 style={{
-                fontSize: 'var(--font-base)',
-                fontWeight: 600,
+                fontSize: 'var(--font-xs)',
+                fontWeight: 800,
                 color: 'var(--accent-secondary)',
-                marginBottom: 'var(--space-sm)',
+                marginBottom: 'var(--space-md)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em'
               }}>
-                🦴 Disease Symptoms ({results.diseaseMatches.length})
+                Disease Symptoms ({results.diseaseMatches.length})
               </h3>
               {results.diseaseMatches.map((r, i) => (
-                <div key={i} className="symptom-result symptom-result--disease">
+                <div key={i} className="symptom-result symptom-result--disease glass-morphism">
                   <div className="symptom-result__source" style={{ color: 'var(--accent-secondary)' }}>
-                    {r.icon} {r.source}
+                    <Icon name={r.icon} size={14} />
+                    {r.source}
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: 'var(--font-sm)', marginBottom: '4px' }}>{r.symptom}</div>
+                  <div style={{ fontWeight: 700, fontSize: 'var(--font-base)', color: 'var(--text-primary)', marginBottom: '4px' }}>{r.symptom}</div>
                   <div className="symptom-result__text">{r.description}</div>
                 </div>
               ))}
-            </>
+            </div>
           )}
 
           {results.medMatches.length > 0 && (
-            <>
+            <div className="stagger-item">
               <h3 style={{
-                fontSize: 'var(--font-base)',
-                fontWeight: 600,
+                fontSize: 'var(--font-xs)',
+                fontWeight: 800,
                 color: 'var(--accent-primary)',
-                marginBottom: 'var(--space-sm)',
-                marginTop: 'var(--space-md)',
+                marginBottom: 'var(--space-md)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em'
               }}>
-                💊 Medication Side Effects ({results.medMatches.length})
+                Medication Side Effects ({results.medMatches.length})
               </h3>
               {results.medMatches.map((r, i) => (
-                <div key={i} className={`symptom-result symptom-result--medication`}>
-                  <div className="symptom-result__source" style={{ color: r.isSerious ? '#f87171' : 'var(--accent-primary)' }}>
-                    {r.isSerious ? '🚨' : r.icon} {r.source}
-                    {r.isSerious && <span className="badge badge--danger" style={{ marginLeft: '8px' }}>SERIOUS</span>}
+                <div key={i} className={`symptom-result symptom-result--medication glass-morphism`}>
+                  <div className="symptom-result__source" style={{ color: r.isSerious ? 'var(--danger)' : 'var(--accent-primary)' }}>
+                    <Icon name={r.isSerious ? 'alert-circle' : r.icon} size={14} />
+                    {r.source}
+                    {r.isSerious && <span className="badge badge--danger" style={{ marginLeft: '8px', fontSize: '8px' }}>SERIOUS</span>}
                   </div>
-                  <div style={{ fontWeight: 600, fontSize: 'var(--font-sm)', marginBottom: '4px' }}>{r.symptom}</div>
+                  <div style={{ fontWeight: 700, fontSize: 'var(--font-base)', color: 'var(--text-primary)', marginBottom: '4px' }}>{r.symptom}</div>
                   <div className="symptom-result__text">{r.description}</div>
                 </div>
               ))}
-            </>
+            </div>
           )}
 
           {results.all.length === 0 && (
-            <div className="empty-state">
-              <div className="empty-state__icon">🤔</div>
+            <div className="empty-state stagger-item">
+              <div className="empty-state__icon">
+                <Icon name="search" size={48} />
+              </div>
               <div className="empty-state__text">
-                No matches found. Try different keywords or ask the chatbot for help.
+                No direct matches found in our database. Consider asking RheumBot for more detailed insights.
               </div>
             </div>
           )}
 
-          <div className="disclaimer" style={{ marginTop: 'var(--space-lg)' }}>
-            <span className="disclaimer__icon">⚕️</span>
-            This tool matches symptoms against known disease symptoms and FDA-listed medication side effects. It cannot diagnose conditions. Always consult your rheumatologist about new or concerning symptoms.
+          <div className="disclaimer stagger-item" style={{ marginTop: 'var(--space-2xl)' }}>
+            <div className="disclaimer__icon">
+              <Icon name="info" size={20} color="var(--text-muted)" />
+            </div>
+            <div>
+              This tool cross-references symptoms against known rheumatologic profiles and FDA drug labels. It is for educational purposes only.
+            </div>
           </div>
         </div>
       )}

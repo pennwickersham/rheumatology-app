@@ -32,45 +32,59 @@ export default function Login() {
   };
 
   return (
-    <div className="page-enter" style={{ paddingBottom: 'var(--space-2xl)' }}>
-      <div className="section-header">
-        <h1 className="section-header__title">Welcome Back</h1>
+    <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)' }}>
+      <div className="section-header" style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
+        <div className="flex-center" style={{ marginBottom: 'var(--space-xl)' }}>
+          <div className="glass flex-center" style={{ 
+            width: '96px', 
+            height: '96px', 
+            borderRadius: 'var(--radius-2xl)',
+            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(139, 92, 246, 0.2)',
+            color: 'var(--accent-primary)',
+            boxShadow: 'var(--shadow-glow)'
+          }}>
+            <Icon name="lock" size={48} />
+          </div>
+        </div>
+        <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)', marginBottom: 'var(--space-sm)' }}>Welcome Back</h1>
         <p className="section-header__subtitle">Sign in to your personalized dashboard</p>
       </div>
 
-      <div className="card">
+      <div className="card glass-morphism stagger-item">
         {error && (
-          <div className="badge badge--danger" style={{ display: 'block', marginBottom: 'var(--space-md)', padding: 'var(--space-sm)' }}>
+          <div className="badge badge--danger w-full" style={{ 
+            marginBottom: 'var(--space-lg)', 
+            padding: 'var(--space-md)',
+            borderRadius: 'var(--radius-md)',
+            justifyContent: 'center'
+          }}>
+            <Icon name="zap" size={16} />
             {error}
           </div>
         )}
 
-        <div style={{ marginBottom: 'var(--space-lg)' }}>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)' }}>
-            <strong>Demo mode:</strong> Enter your registered email, or use any email with the password <code>password</code> to try the demo account.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
           <div className="search-bar" style={{ marginBottom: 0 }}>
-            <span className="search-bar__icon"><Icon name="mail" size={16} /></span>
+            <span className="search-bar__icon"><Icon name="mail" size={20} /></span>
             <input
               type="email"
               className="search-bar__input"
               placeholder="Email Address"
               value={email}
               onChange={e => setEmail(e.target.value)}
+              required
             />
           </div>
 
           <div className="search-bar" style={{ marginBottom: 0 }}>
-            <span className="search-bar__icon"><Icon name="lock" size={16} /></span>
+            <span className="search-bar__icon"><Icon name="lock" size={20} /></span>
             <input
               type="password"
               className="search-bar__input"
               placeholder="Password"
               value={password}
               onChange={e => setPassword(e.target.value)}
+              required
             />
           </div>
 
@@ -78,16 +92,48 @@ export default function Login() {
             type="submit"
             className="btn btn--primary btn--full"
             disabled={loading}
-            style={{ marginTop: 'var(--space-lg)', padding: 'var(--space-md)' }}
+            style={{ 
+              height: '56px', 
+              fontSize: 'var(--font-base)',
+              borderRadius: 'var(--radius-lg)'
+            }}
           >
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? (
+              <>
+                <div className="spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }} />
+                <span>Signing In...</span>
+              </>
+            ) : 'Sign In'}
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 'var(--space-lg)', fontSize: 'var(--font-sm)' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>Don't have an account? </span>
-          <Link to="/register" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Create Account</Link>
+        <div style={{ 
+          marginTop: 'var(--space-xl)', 
+          paddingTop: 'var(--space-xl)', 
+          borderTop: '1px solid var(--border)',
+          textAlign: 'center' 
+        }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', marginBottom: 'var(--space-md)' }}>
+            Don't have an account?
+          </p>
+          <Link to="/register" className="btn btn--outline btn--full" style={{ borderRadius: 'var(--radius-lg)' }}>
+            Create New Account
+          </Link>
         </div>
+      </div>
+
+      <div className="stagger-item" style={{ 
+        marginTop: 'var(--space-2xl)', 
+        padding: 'var(--space-lg)',
+        background: 'rgba(245, 158, 11, 0.05)',
+        border: '1px solid rgba(245, 158, 11, 0.1)',
+        borderRadius: 'var(--radius-lg)',
+        textAlign: 'center'
+      }}>
+        <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          <strong style={{ color: 'var(--warning)', display: 'block', marginBottom: '4px' }}>Demo Mode</strong>
+          Enter any email with password <code>password</code> to try the demo account.
+        </p>
       </div>
     </div>
   );

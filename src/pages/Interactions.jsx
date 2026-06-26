@@ -74,76 +74,109 @@ export default function Interactions() {
   };
 
   return (
-    <div className="page-enter" style={{ position: 'relative' }}>
-      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)' }}>
+      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
         <div>
-          <h1 className="section-header__title">Drug Interactions</h1>
-          <p className="section-header__subtitle">Analyze interactions safely</p>
+          <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)' }}>Interactions</h1>
+          <p className="section-header__subtitle">Analyze medication safety with AI</p>
         </div>
         <button 
-          className="btn btn--outline btn--sm" 
+          className="btn glass" 
           onClick={() => setShowSettings(!showSettings)}
-          aria-label="Settings"
+          style={{ width: '44px', height: '44px', borderRadius: 'var(--radius-md)', padding: 0 }}
         >
-          <Icon name="cog" size={20} />
+          <Icon name="settings" size={20} />
         </button>
       </div>
 
       {showSettings && (
-        <div className="card" style={{ marginBottom: 'var(--space-xl)', background: 'var(--bg-glass-hover)', border: '1px solid var(--accent-primary)' }}>
-          <h3 style={{ margin: '0 0 var(--space-md) 0' }}>API Settings</h3>
-          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
-            This feature requires a Gemini API key. Please enter it securely below.
+        <div className="settings-form glass-morphism stagger-item" style={{ marginBottom: 'var(--space-xl)', border: '1px solid var(--accent-primary)' }}>
+          <div className="flex-between" style={{ marginBottom: 'var(--space-md)' }}>
+            <h3 style={{ fontSize: 'var(--font-base)', fontWeight: 800, color: 'var(--accent-primary)' }}>API Settings</h3>
+            <button className="btn btn--sm" style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }} onClick={() => setShowSettings(false)}>
+              <Icon name="trash" size={14} />
+            </button>
+          </div>
+          <p className="settings-field__description">
+            This feature requires a Google Gemini API key. Your key is stored securely on your device.
           </p>
           <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-            <input
-              type="password"
-              placeholder="AIzaSy..."
-              value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
-              className="form-input"
-              style={{ flex: 1, borderColor: keyError ? 'var(--danger)' : 'var(--border)' }}
-            />
-            <button className="btn btn--primary" onClick={handleSaveKey}>Save</button>
+            <div className="search-bar" style={{ flex: 1, marginBottom: 0 }}>
+              <span className="search-bar__icon"><Icon name="lock" size={18} /></span>
+              <input
+                type="password"
+                placeholder="AIzaSy..."
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                className="search-bar__input"
+              />
+            </div>
+            <button className="btn btn--primary" onClick={handleSaveKey} style={{ borderRadius: 'var(--radius-md)' }}>Save</button>
           </div>
+          {keyError && <p style={{ color: 'var(--danger)', fontSize: '10px', marginTop: '8px', fontWeight: 600 }}>Please enter a valid API key</p>}
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: 'var(--space-2xl)' }}>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', marginBottom: 'var(--space-lg)' }}>
-          Enter the active ingredients or brand names of your medications to check for known pharmacological interactions.
+      <div className="card glass-morphism stagger-item" style={{ marginBottom: 'var(--space-2xl)', padding: 'var(--space-xl)' }}>
+        <div className="flex-center" style={{ 
+          width: '56px', 
+          height: '56px', 
+          borderRadius: 'var(--radius-xl)', 
+          background: 'rgba(139, 92, 246, 0.1)', 
+          color: 'var(--accent-secondary)',
+          marginBottom: 'var(--space-lg)',
+          boxShadow: '0 0 20px rgba(139, 92, 246, 0.2)'
+        }}>
+          <Icon name="activity" size={28} />
+        </div>
+        
+        <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', lineHeight: 1.6, marginBottom: 'var(--space-xl)' }}>
+          Enter brand or generic names to check for pharmacological interactions. This analysis uses Gemini AI referencing clinical frameworks.
         </p>
 
-        {drugs.map((drug, index) => (
-          <div key={index} style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
-            <input 
-              type="text"
-              placeholder={`Medication ${index + 1}`}
-              value={drug}
-              onChange={(e) => handleDrugChange(index, e.target.value)}
-              className="form-input"
-              style={{ flex: 1 }}
-            />
-            {drugs.length > 2 && (
-              <button 
-                className="btn btn--outline" 
-                onClick={() => removeDrugField(index)}
-                style={{ padding: '0 var(--space-sm)', color: 'var(--danger)', borderColor: 'var(--danger)' }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+          {drugs.map((drug, index) => (
+            <div key={index} className="stagger-item" style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+              <div className="search-bar" style={{ flex: 1, marginBottom: 0 }}>
+                <span className="search-bar__icon" style={{ opacity: drug.length > 0 ? 1 : 0.4 }}>
+                  <Icon name="clipboard" size={18} />
+                </span>
+                <input 
+                  type="text"
+                  placeholder={`Medication ${index + 1}`}
+                  value={drug}
+                  onChange={(e) => handleDrugChange(index, e.target.value)}
+                  className="search-bar__input"
+                />
+              </div>
+              {drugs.length > 2 && (
+                <button 
+                  className="btn glass" 
+                  onClick={() => removeDrugField(index)}
+                  style={{ width: '48px', color: 'var(--danger)', borderRadius: 'var(--radius-md)' }}
+                >
+                  <Icon name="trash" size={18} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
-          <button className="btn btn--outline btn--sm" onClick={addDrugField} style={{ borderStyle: 'dashed' }}>
-             + Add Medication
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-xl)', marginBottom: 'var(--space-2xl)' }}>
+          <button className="btn btn--outline btn--sm" onClick={addDrugField} style={{ borderStyle: 'dashed', borderRadius: 'var(--radius-md)', padding: '10px 20px' }}>
+            <Icon name="plus" size={14} />
+            Add Medication
           </button>
         </div>
 
         {error && (
-          <div style={{ padding: 'var(--space-sm)', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-md)' }}>
+          <div className="badge badge--danger w-full stagger-item" style={{ 
+            marginBottom: 'var(--space-lg)', 
+            padding: 'var(--space-md)',
+            borderRadius: 'var(--radius-md)',
+            justifyContent: 'center'
+          }}>
+            <Icon name="zap" size={16} />
             {error}
           </div>
         )}
@@ -152,29 +185,48 @@ export default function Interactions() {
           className="btn btn--primary btn--full" 
           onClick={handleCheck} 
           disabled={loading || showSettings}
-          style={{ height: '48px', fontSize: 'var(--font-base)', fontWeight: 600, background: 'var(--accent-secondary)' }}
+          style={{ 
+            height: '56px', 
+            fontSize: 'var(--font-base)', 
+            borderRadius: 'var(--radius-lg)', 
+            background: 'var(--accent-gradient)',
+            boxShadow: 'var(--shadow-glow)'
+          }}
         >
           {loading ? (
-             <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-               <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></span>
-               Analyzing...
-             </span>
+             <>
+               <div className="spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }} />
+               <span>Analyzing Interactions...</span>
+             </>
           ) : (
-            <>Check Interactions</>
+            <>
+              <Icon name="activity" size={20} />
+              <span>Check Interactions</span>
+            </>
           )}
         </button>
       </div>
 
       {result && (
-        <div className="card" style={{ marginBottom: 'var(--space-2xl)', background: '#111827', border: '1px solid var(--border)' }}>
-          <h3 style={{ borderBottom: '1px solid var(--border)', paddingBottom: 'var(--space-sm)', marginBottom: 'var(--space-md)', color: '#fcd34d' }}>
-            Analysis Report
-          </h3>
-          <div className="chat-message__content" style={{ fontSize: 'var(--font-md)' }}>
+        <div className="analysis-report stagger-item">
+          <div className="analysis-report__header">
+            <div className="flex-center" style={{ width: '40px', height: '40px', borderRadius: 'var(--radius-md)', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)' }}>
+              <Icon name="alert-triangle" size={22} />
+            </div>
+            <h3 className="analysis-report__title">Analysis Report</h3>
+          </div>
+          
+          <div className="markdown-content">
             <ReactMarkdown>{result}</ReactMarkdown>
           </div>
-          <div style={{ marginTop: 'var(--space-lg)', padding: 'var(--space-sm)', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
-            <strong>Disclaimer:</strong> This check uses generative AI referencing clinical interaction frameworks. It cannot replace professional medical advice. Always speak with your doctor or pharmacist prior to changing your medication regimen.
+
+          <div className="disclaimer" style={{ marginTop: 'var(--space-2xl)' }}>
+            <div className="disclaimer__icon">
+              <Icon name="info" size={20} color="var(--text-muted)" />
+            </div>
+            <div>
+              <strong>Medical Disclaimer:</strong> This AI-generated report is for educational purposes only. It is not a clinical diagnosis. Always consult with your rheumatologist or pharmacist before modifying any medication regimen.
+            </div>
           </div>
         </div>
       )}

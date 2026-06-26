@@ -1,10 +1,4 @@
-// Proxy URL — points to the Cloudflare Worker that holds the API key server-side.
-// The API key NEVER appears in client code.
-// Set VITE_PROXY_URL in .env (local) or your cloud build environment.
-const PROXY_URL = import.meta.env.VITE_PROXY_URL || '';
-
-const GEMINI_MODEL = 'gemini-2.5-pro';
-const GEMINI_PATH = `/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
 
 const SYSTEM_PROMPT = `You are a medical information assistant for rheumatology patients. You provide helpful, accurate, and easy-to-understand information about rheumatologic diseases and their treatments.
 
@@ -40,45 +34,18 @@ Common rheumatology medication classes you can discuss:
 Format your responses with clear headers and bullet points when appropriate. Keep responses focused and concise.`;
 
 /**
- * Send a request to the Gemini API via the Cloudflare Worker proxy.
- * The proxy injects the API key server-side.
- */
-async function callGeminiProxy(body) {
-  if (!PROXY_URL) {
-    throw new Error('Proxy URL not configured. Please set VITE_PROXY_URL in your .env file.');
-  }
-
-  const response = await fetch(`${PROXY_URL}${GEMINI_PATH}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    if (response.status === 400) throw new Error('Invalid request. Please try again.');
-    if (response.status === 403) throw new Error('Request blocked. Origin not allowed.');
-    if (response.status === 429) throw new Error('Rate limit exceeded. Please wait a moment and try again.');
-    if (response.status === 502) throw new Error('AI service temporarily unavailable. Please try again.');
-    throw new Error(error.error?.message || `API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!text) throw new Error('No response generated. The model may have blocked this request.');
-
-  return text;
-}
-
-/**
  * Send a message to the Gemini API
+ * @param {string} apiKey - Gemini API key
  * @param {Array<Object>} chatHistory - Previous messages [{role, content}]
  * @param {string} userMessage - New user message
  * @returns {Promise<string>} Assistant response text
  */
 export async function sendChatMessage(apiKey, chatHistory, userMessage) {
-  // Build contents array with chat history
+  if (!apiKey) {
+    throw new Error('Gemini API key is required. Please set your API key in Settings.');
+  }
+
+  // Build contents array with system instruction and chat history
   const contents = [];
 
   // Add chat history
@@ -114,7 +81,25 @@ export async function sendChatMessage(apiKey, chatHistory, userMessage) {
   };
 
   try {
-    return await callGeminiProxy(body);
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      if (response.status === 400) throw new Error('Invalid API key or request. Please check your Gemini API key.');
+      if (response.status === 429) throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+      throw new Error(error.error?.message || `API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) throw new Error('No response generated. The model may have blocked this request.');
+
+    return text;
   } catch (error) {
     console.error('Gemini API error:', error);
     throw error;
@@ -122,24 +107,24 @@ export async function sendChatMessage(apiKey, chatHistory, userMessage) {
 }
 
 /**
- * Get the API key from localStorage (kept for backward compat, no longer needed)
+ * Get the API key from localStorage
  */
 export function getApiKey() {
-  return 'proxy'; // API key is now server-side
+  return localStorage.getItem('rheum_gemini_api_key') || '';
 }
 
 /**
- * Save the API key to localStorage (no-op — key is now server-side)
+ * Save the API key to localStorage
  */
 export function setApiKey(key) {
-  // No-op — API key is managed in Cloudflare Worker
+  localStorage.setItem('rheum_gemini_api_key', key);
 }
 
 /**
- * Check if API key is set — always true since proxy handles it
+ * Check if API key is set
  */
 export function hasApiKey() {
-  return !!PROXY_URL;
+  return !!getApiKey();
 }
 
 /**
@@ -160,6 +145,10 @@ export const suggestedQuestions = [
  * Check drug interactions using Gemini
  */
 export async function checkDrugInteractions(apiKey, drugsList) {
+  if (!apiKey) {
+    throw new Error('Gemini API key is required. Please set your API key in Settings.');
+  }
+  
   if (!drugsList || drugsList.length < 2) {
     throw new Error('Please provide at least two medications to check for interactions.');
   }
@@ -188,9 +177,27 @@ Your task is to analyze potential interactions between the provided list of medi
   };
 
   try {
-    return await callGeminiProxy(body);
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      if (response.status === 400) throw new Error('Invalid API key or request.');
+      if (response.status === 429) throw new Error('Rate limit exceeded.');
+      throw new Error(error.error?.message || `API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('No interaction data returned.');
+    
+    return text;
   } catch (error) {
     console.error('Interaction API error:', error);
     throw error;
   }
 }
+

@@ -56,53 +56,58 @@ export default function ClinicalTrials() {
   };
 
   return (
-    <div className="page-enter">
+    <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)' }}>
       <div className="section-header">
-        <h1 className="section-header__title">Clinical Trials</h1>
-        <p className="section-header__subtitle">Find active studies by diagnosis</p>
+        <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)' }}>Clinical Trials</h1>
+        <p className="section-header__subtitle">Explore live research from ClinicalTrials.gov</p>
       </div>
 
-      <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', marginBottom: 'var(--space-lg)' }}>
-          Search <strong>ClinicalTrials.gov</strong> for recruiting studies related to your rheumatologic condition. Results are sourced live from the U.S. National Library of Medicine.
+      <div className="card glass-morphism stagger-item" style={{ marginBottom: 'var(--space-2xl)', padding: 'var(--space-xl)' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', lineHeight: 1.6, marginBottom: 'var(--space-xl)' }}>
+          Find recruiting studies for your rheumatologic condition. Results are sourced live from the <strong>U.S. National Library of Medicine</strong>.
         </p>
 
-        <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px' }}>Select Condition</label>
-        <select
-          value={selectedCondition}
-          onChange={(e) => setSelectedCondition(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '12px 14px',
-            background: 'var(--bg-glass)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-primary)',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: 'var(--space-md)',
-            fontSize: 'var(--font-base)',
-            colorScheme: 'dark',
-          }}
-        >
-          <option value="">— Choose a condition —</option>
-          {diseases.map(d => (
-            <option key={d.id} value={d.name}>{d.name} ({d.shortName})</option>
-          ))}
-          <option value="__custom__">Other (type your own)...</option>
-        </select>
+        <div style={{ marginBottom: 'var(--space-xl)' }}>
+          <label style={{ display: 'block', fontSize: 'var(--font-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
+            Diagnosis or Condition
+          </label>
+          <select
+            value={selectedCondition}
+            onChange={(e) => setSelectedCondition(e.target.value)}
+            className="select-field"
+            style={{ colorScheme: 'dark' }}
+          >
+            <option value="">— Select your condition —</option>
+            {diseases.map(d => (
+              <option key={d.id} value={d.name}>{d.name}</option>
+            ))}
+            <option value="__custom__">Other Condition...</option>
+          </select>
+        </div>
 
         {selectedCondition === '__custom__' && (
-          <input
-            type="text"
-            placeholder="e.g. Dermatomyositis, Scleroderma..."
-            value={customCondition}
-            onChange={(e) => setCustomCondition(e.target.value)}
-            className="form-input"
-            style={{ width: '100%', marginBottom: 'var(--space-md)' }}
-          />
+          <div className="stagger-item" style={{ marginBottom: 'var(--space-xl)', animation: 'slideUp 0.3s ease' }}>
+            <label style={{ display: 'block', fontSize: 'var(--font-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
+              Enter Condition Name
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Dermatomyositis..."
+              value={customCondition}
+              onChange={(e) => setCustomCondition(e.target.value)}
+              className="input-field"
+            />
+          </div>
         )}
 
         {error && (
-          <div style={{ padding: 'var(--space-sm)', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-md)', fontSize: 'var(--font-sm)' }}>
+          <div className="badge badge--danger w-full stagger-item" style={{ 
+            marginBottom: 'var(--space-lg)', 
+            padding: 'var(--space-md)',
+            borderRadius: 'var(--radius-md)',
+            justifyContent: 'center'
+          }}>
+            <Icon name="zap" size={16} />
             {error}
           </div>
         )}
@@ -111,104 +116,139 @@ export default function ClinicalTrials() {
           className="btn btn--primary btn--full"
           onClick={handleSearch}
           disabled={loading}
-          style={{ height: '48px', fontSize: 'var(--font-base)', fontWeight: 600 }}
+          style={{ height: '56px', fontSize: 'var(--font-base)', borderRadius: 'var(--radius-lg)' }}
         >
           {loading ? (
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></span>
-              Searching...
-            </span>
+            <>
+              <div className="spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }} />
+              <span>Searching NLM Database...</span>
+            </>
           ) : (
-            'Search Clinical Trials'
+            <>
+              <Icon name="search" size={20} />
+              <span>Search Clinical Trials</span>
+            </>
           )}
         </button>
       </div>
 
       {searched && !loading && (
-        <div style={{ marginBottom: 'var(--space-md)' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', marginBottom: 'var(--space-md)' }}>
+        <div className="stagger-item" style={{ marginBottom: 'var(--space-lg)', textAlign: 'center' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', fontWeight: 600 }}>
             {trials.length > 0
-              ? `Found ${trials.length} active trial${trials.length !== 1 ? 's' : ''}`
-              : 'No recruiting trials found for this condition. Try broadening your search or check back later.'}
+              ? `Found ${trials.length} active study findings`
+              : 'No recruiting trials found for this search.'}
           </p>
         </div>
       )}
 
-      <div style={{ marginBottom: 'var(--space-2xl)' }}>
-        {trials.map(trial => {
+      <div style={{ marginBottom: 'var(--space-3xl)' }}>
+        {trials.map((trial, i) => {
           const isExpanded = expandedId === trial.nctId;
           return (
             <div
               key={trial.nctId}
-              className="card"
-              style={{ marginBottom: 'var(--space-sm)', cursor: 'pointer' }}
+              className={`card glass-morphism stagger-item ${isExpanded ? 'active' : ''}`}
+              style={{ 
+                marginBottom: 'var(--space-md)', 
+                cursor: 'pointer',
+                padding: 'var(--space-lg)',
+                borderLeft: isExpanded ? `4px solid ${getStatusColor(trial.status)}` : '1px solid var(--border)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
               onClick={() => setExpandedId(isExpanded ? null : trial.nctId)}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-sm)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-md)' }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', marginBottom: 'var(--space-md)' }}>
                     <span style={{
-                      display: 'inline-block',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      fontSize: 'var(--font-xs)',
-                      fontWeight: 600,
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
                       color: '#fff',
                       background: getStatusColor(trial.status),
+                      boxShadow: `0 0 10px ${getStatusColor(trial.status)}44`
                     }}>
                       {getStatusLabel(trial.status)}
                     </span>
                     {trial.phase !== 'N/A' && (
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        fontSize: 'var(--font-xs)',
-                        fontWeight: 600,
-                        color: 'var(--accent-primary)',
-                        border: '1px solid var(--accent-primary)',
-                      }}>
+                      <span className="badge glass" style={{ fontSize: '10px', color: 'var(--accent-primary)', borderColor: 'var(--border-accent)' }}>
                         {trial.phase}
                       </span>
                     )}
                   </div>
-                  <h3 style={{ margin: '0 0 4px 0', fontSize: 'var(--font-sm)', color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--font-base)', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.5 }}>
                     {trial.title}
                   </h3>
-                  <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
-                    {trial.nctId} · {trial.sponsor}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    <span style={{ color: 'var(--accent-secondary)' }}>{trial.nctId}</span>
+                    <span>•</span>
+                    <span style={{ 
+                      maxWidth: '180px', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap' 
+                    }}>{trial.sponsor}</span>
                   </div>
                 </div>
-                <span style={{ color: 'var(--text-muted)', transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-                  ▼
-                </span>
+                <div style={{ 
+                  color: 'var(--text-muted)', 
+                  transform: isExpanded ? 'rotate(180deg)' : 'none', 
+                  transition: 'transform 0.3s ease',
+                  marginTop: 'var(--space-xs)'
+                }}>
+                  <Icon name="chevron-down" size={20} />
+                </div>
               </div>
 
               {isExpanded && (
-                <div style={{ marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border)' }}>
+                <div style={{ marginTop: 'var(--space-xl)', paddingTop: 'var(--space-xl)', borderTop: '1px solid var(--border)', animation: 'fadeIn 0.4s ease' }}>
                   {trial.summary && (
-                    <div style={{ marginBottom: 'var(--space-md)' }}>
-                      <h4 style={{ fontSize: 'var(--font-xs)', color: 'var(--accent-primary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Summary</h4>
-                      <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
-                        {trial.summary.length > 400 ? trial.summary.substring(0, 400) + '...' : trial.summary}
+                    <div style={{ marginBottom: 'var(--space-xl)' }}>
+                      <h4 style={{ 
+                        fontSize: 'var(--font-xs)', 
+                        fontWeight: 700, 
+                        color: 'var(--accent-primary)', 
+                        marginBottom: 'var(--space-sm)', 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.05em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <Icon name="info" size={14} />
+                        Study Objective
+                      </h4>
+                      <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>
+                        {trial.summary.length > 500 ? trial.summary.substring(0, 500) + '...' : trial.summary}
                       </p>
                     </div>
                   )}
 
                   {trial.interventions.length > 0 && (
-                    <div style={{ marginBottom: 'var(--space-md)' }}>
-                      <h4 style={{ fontSize: 'var(--font-xs)', color: 'var(--accent-primary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Interventions</h4>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    <div style={{ marginBottom: 'var(--space-xl)' }}>
+                      <h4 style={{ 
+                        fontSize: 'var(--font-xs)', 
+                        fontWeight: 700, 
+                        color: 'var(--accent-secondary)', 
+                        marginBottom: 'var(--space-md)', 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.05em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <Icon name="activity" size={14} />
+                        Interventions
+                      </h4>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
                         {trial.interventions.map((intv, i) => (
-                          <span key={i} style={{
-                            padding: '3px 10px',
-                            borderRadius: '12px',
-                            fontSize: 'var(--font-xs)',
-                            background: 'rgba(6, 182, 212, 0.15)',
-                            color: 'var(--accent-primary)',
-                            border: '1px solid rgba(6, 182, 212, 0.25)',
-                          }}>
-                            {intv.name} <span style={{ opacity: 0.6 }}>({intv.type})</span>
+                          <span key={i} className="badge glass" style={{ padding: '8px 14px', borderRadius: 'var(--radius-md)' }}>
+                            <strong style={{ color: 'var(--text-primary)' }}>{intv.name}</strong>
+                            <span style={{ color: 'var(--text-muted)', marginLeft: '6px' }}>({intv.type})</span>
                           </span>
                         ))}
                       </div>
@@ -216,19 +256,65 @@ export default function ClinicalTrials() {
                   )}
 
                   {trial.locations.length > 0 && (
-                    <div style={{ marginBottom: 'var(--space-md)' }}>
-                      <h4 style={{ fontSize: 'var(--font-xs)', color: 'var(--accent-primary)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Locations</h4>
-                      {trial.locations.map((loc, i) => (
-                        <div key={i} style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                          📍 {[loc.facility, loc.city, loc.state, loc.country].filter(Boolean).join(', ')}
-                        </div>
-                      ))}
+                    <div style={{ marginBottom: 'var(--space-xl)' }}>
+                      <h4 style={{ 
+                        fontSize: 'var(--font-xs)', 
+                        fontWeight: 700, 
+                        color: 'var(--accent-tertiary)', 
+                        marginBottom: 'var(--space-md)', 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.05em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <Icon name="map-pin" size={14} />
+                        Study Locations
+                      </h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                        {trial.locations.slice(0, 5).map((loc, i) => (
+                          <div key={i} style={{ 
+                            fontSize: 'var(--font-xs)', 
+                            color: 'var(--text-secondary)', 
+                            padding: '8px 12px',
+                            background: 'rgba(255,255,255,0.02)',
+                            borderRadius: 'var(--radius-sm)',
+                            display: 'flex',
+                            gap: '8px'
+                          }}>
+                            <span style={{ opacity: 0.6 }}>📍</span>
+                            <span>{[loc.facility, loc.city, loc.state].filter(Boolean).join(', ')}</span>
+                          </div>
+                        ))}
+                        {trial.locations.length > 5 && (
+                          <div style={{ fontSize: '10px', color: 'var(--text-muted)', paddingLeft: 'var(--space-md)', marginTop: '4px' }}>
+                            + {trial.locations.length - 5} more locations available on ClinicalTrials.gov
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap', fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginBottom: 'var(--space-md)' }}>
-                    {trial.enrollment && <span>👥 Target: {trial.enrollment} participants</span>}
-                    {trial.startDate && <span>📅 Started: {trial.startDate}</span>}
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: 'var(--space-lg)', 
+                    padding: 'var(--space-md)', 
+                    background: 'var(--bg-glass)', 
+                    borderRadius: 'var(--radius-lg)',
+                    marginBottom: 'var(--space-xl)'
+                  }}>
+                    {trial.enrollment && (
+                      <div style={{ flex: 1 }}>
+                        <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '2px' }}>Enrollment</span>
+                        <span style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: 'var(--text-primary)' }}>{trial.enrollment}</span>
+                      </div>
+                    )}
+                    {trial.startDate && (
+                      <div style={{ flex: 1 }}>
+                        <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '2px' }}>Start Date</span>
+                        <span style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: 'var(--text-primary)' }}>{trial.startDate}</span>
+                      </div>
+                    )}
                   </div>
 
                   <a
@@ -236,10 +322,11 @@ export default function ClinicalTrials() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="btn btn--outline btn--sm"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+                    className="btn btn--outline btn--full"
+                    style={{ borderRadius: 'var(--radius-lg)', justifyContent: 'center' }}
                   >
-                    <Icon name="link" size={14} /> View on ClinicalTrials.gov
+                    <Icon name="external-link" size={16} /> 
+                    Full Study Details
                   </a>
                 </div>
               )}

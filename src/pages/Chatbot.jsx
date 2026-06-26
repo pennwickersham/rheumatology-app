@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { sendChatMessage, getApiKey, setApiKey, hasApiKey, suggestedQuestions } from '../api/gemini';
 import { saveToStorage, loadFromStorage } from '../utils/storage';
 import { Share } from '@capacitor/share';
+import { Icon } from '../components/Icons';
 
 export default function Chatbot() {
   const [messages, setMessages] = useState(() => loadFromStorage('chat_history', []));
@@ -15,7 +16,7 @@ export default function Chatbot() {
 
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, loading]);
 
   useEffect(() => {
     saveToStorage('chat_history', messages);
@@ -62,54 +63,150 @@ export default function Chatbot() {
   // Settings panel
   if (showSettings) {
     return (
-      <div className="page-enter" style={{ padding: 'var(--space-lg)' }}>
-        <div className="section-header">
-          <h1 className="section-header__title">🤖 RheumBot Setup</h1>
-          <p className="section-header__subtitle">Enter your Gemini API key to start chatting</p>
-        </div>
-        <div className="settings-form">
-          <div className="settings-field">
-            <label className="settings-field__label">Gemini API Key</label>
-            <p className="settings-field__description">Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>. Your key is stored locally and never sent to any server except Google's API.</p>
-            <input className="settings-field__input" type="password" placeholder="AIza..." value={apiKeyInput} onChange={e => setApiKeyInput(e.target.value)} />
+      <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)', paddingTop: 'var(--space-lg)', paddingLeft: 'var(--space-lg)', paddingRight: 'var(--space-lg)', overflowY: 'auto', height: '100%' }}>
+        <div className="section-header" style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
+          <div className="flex-center" style={{ marginBottom: 'var(--space-xl)' }}>
+            <div className="glass flex-center" style={{ 
+              width: '96px', 
+              height: '96px', 
+              borderRadius: 'var(--radius-2xl)',
+              background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(139, 92, 246, 0.2)',
+              color: 'var(--accent-primary)',
+              boxShadow: 'var(--shadow-glow)'
+            }}>
+              <Icon name="chat" size={48} />
+            </div>
           </div>
-          <button className="btn btn--primary btn--full" onClick={saveKey} disabled={!apiKeyInput.trim()}>Save & Start Chatting</button>
-          {hasApiKey() && <button className="btn btn--outline btn--full" onClick={() => setShowSettings(false)}>Cancel</button>}
+          <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)', marginBottom: 'var(--space-sm)' }}>RheumBot Setup</h1>
+          <p className="section-header__subtitle">Configure your AI medical companion</p>
+        </div>
+
+        <div className="settings-form glass-morphism">
+          <div className="settings-field">
+            <label className="settings-field__label">Google Gemini API Key</label>
+            <p className="settings-field__description">
+              Get a free API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Google AI Studio</a>.
+              Your key remains on your device and is only used to communicate with Google's secure AI infrastructure.
+            </p>
+            <div className="search-bar" style={{ marginBottom: 0 }}>
+              <span className="search-bar__icon"><Icon name="lock" size={20} /></span>
+              <input 
+                className="search-bar__input" 
+                type="password" 
+                placeholder="Paste your AIza... key here" 
+                value={apiKeyInput} 
+                onChange={e => setApiKeyInput(e.target.value)} 
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+            <button className="btn btn--primary btn--full" onClick={saveKey} disabled={!apiKeyInput.trim()} style={{ height: '56px', borderRadius: 'var(--radius-lg)' }}>
+              <Icon name="check" size={18} />
+              Save & Start Chatting
+            </button>
+            {hasApiKey() && (
+              <button className="btn btn--outline btn--full" onClick={() => setShowSettings(false)} style={{ height: '56px', borderRadius: 'var(--radius-lg)' }}>
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="stagger-item" style={{ 
+          marginTop: 'var(--space-3xl)', 
+          padding: 'var(--space-xl)',
+          background: 'rgba(14, 165, 233, 0.05)',
+          border: '1px solid rgba(14, 165, 233, 0.1)',
+          borderRadius: 'var(--radius-xl)',
+          textAlign: 'center'
+        }}>
+          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            <Icon name="info" size={16} style={{ marginBottom: 'var(--space-xs)', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
+            RheumBot uses the latest Gemini 1.5 Flash model for fast, accurate medical insights based on FDA labels and PubMed research.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="chat-container">
+    <div className="chat-container" style={{
+      marginLeft: showSettings ? 0 : 'calc(-1 * var(--space-lg))',
+      marginRight: showSettings ? 0 : 'calc(-1 * var(--space-lg))',
+      marginTop: showSettings ? 0 : 'calc(-1 * var(--space-xl))',
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      height: showSettings ? 'auto' : '100%'
+    }}>
       <div className="chat-messages">
         {messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 'var(--space-xl) 0' }}>
-            <div style={{ fontSize: '3rem', marginBottom: 'var(--space-md)' }}>🤖</div>
-            <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>RheumBot</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', marginBottom: 'var(--space-lg)', maxWidth: '300px', margin: '0 auto var(--space-lg)' }}>
-              Ask me about rheumatologic diseases, medications, side effects, and more. I use FDA and PubMed data only.
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', justifyContent: 'center' }}>
-              {suggestedQuestions.slice(0, 4).map((q, i) => (
-                <button key={i} className="btn btn--outline btn--sm" onClick={() => handleSend(q)} style={{ fontSize: 'var(--font-xs)', textAlign: 'left' }}>
-                  {q}
-                </button>
-              ))}
+          <div className="page-enter" style={{ textAlign: 'center', padding: 'var(--space-xl) var(--space-lg)' }}>
+            <div className="flex-center" style={{ marginBottom: 'var(--space-lg)' }}>
+              <div className="glass flex-center" style={{ 
+                width: '80px', 
+                height: '80px', 
+                borderRadius: 'var(--radius-xl)',
+                background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+                boxShadow: 'var(--shadow-glow)',
+                animation: 'pulse 2s infinite ease-in-out'
+              }}>
+                <Icon name="chat" size={36} color="var(--accent-primary)" />
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', marginTop: 'var(--space-md)' }}>
-              <button className="btn btn--outline btn--sm" onClick={() => setShowSettings(true)}>⚙️ API Key</button>
+            <h2 style={{ fontSize: 'var(--font-2xl)', fontWeight: 800, marginBottom: 'var(--space-sm)' }}>RheumBot</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', lineHeight: 1.7, marginBottom: 'var(--space-xl)', maxWidth: '320px', margin: '0 auto var(--space-xl)' }}>
+              Your AI-powered rheumatology expert. Ask about medications, symptoms, or research findings.
+            </p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', alignItems: 'center' }}>
+              <p style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', fontWeight: 700 }}>
+                Suggested Topics
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', justifyContent: 'center' }}>
+                {suggestedQuestions.slice(0, 3).map((q, i) => (
+                  <button 
+                    key={i} 
+                    className="card glass-morphism stagger-item" 
+                    onClick={() => handleSend(q)} 
+                    style={{ 
+                      padding: 'var(--space-md)', 
+                      fontSize: 'var(--font-sm)', 
+                      textAlign: 'left',
+                      color: 'white',
+                      borderRadius: 'var(--radius-lg)',
+                      maxWidth: '300px',
+                      width: '100%',
+                      border: '1px solid var(--border-light)'
+                    }}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', marginTop: 'var(--space-xl)' }}>
+              <button className="btn btn--outline btn--sm" style={{ borderRadius: 'var(--radius-md)', padding: '8px 16px' }} onClick={() => setShowSettings(true)}>
+                <Icon name="settings" size={14} /> 
+                API Settings
+              </button>
             </div>
           </div>
         )}
 
         {messages.map((msg, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div key={i} className="stagger-item" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
             <div className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'assistant'}`}>
-              {msg.role === 'assistant' ? <ReactMarkdown>{msg.content}</ReactMarkdown> : msg.content}
+              {msg.role === 'assistant' ? (
+                <div className="markdown-content">
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
+              ) : msg.content}
             </div>
             {msg.role === 'assistant' && (
-              <div style={{ alignSelf: 'flex-start', paddingLeft: '8px' }}>
+              <div style={{ alignSelf: 'flex-start', paddingLeft: '4px' }}>
                 <button
                   onClick={async () => {
                     try {
@@ -121,14 +218,15 @@ export default function Chatbot() {
                     } catch (e) {
                       console.error(e);
                       navigator.clipboard.writeText(msg.content);
-                      alert('Copied to clipboard instead!');
+                      alert('Copied to clipboard!');
                     }
                   }}
+                  className="btn btn--sm"
                   style={{
-                    background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 'var(--font-xs)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px'
+                    background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em'
                   }}
                 >
-                  <span style={{ fontSize: '1.2em' }}>📤</span> Share
+                  <Icon name="share" size={14} style={{ marginRight: '6px' }} /> Share Output
                 </button>
               </div>
             )}
@@ -136,26 +234,44 @@ export default function Chatbot() {
         ))}
 
         {loading && (
-          <div className="chat-bubble chat-bubble--assistant">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="chat-bubble chat-bubble--assistant stagger-item" style={{ border: '1px solid var(--border)', background: 'var(--bg-glass)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
-              <span style={{ color: 'var(--text-muted)' }}>Thinking...</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', fontWeight: 500 }}>RheumBot is thinking...</span>
             </div>
           </div>
         )}
-        <div ref={messagesEnd} />
+        <div ref={messagesEnd} style={{ height: '1px' }} />
       </div>
 
-      <div className="chat-input-area">
+      <div className="chat-input-area glass-morphism">
         {messages.length > 0 && (
-          <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
-            <button className="btn btn--outline btn--sm" onClick={clearChat}>🗑️ Clear</button>
-            <button className="btn btn--outline btn--sm" onClick={() => setShowSettings(true)}>⚙️ Key</button>
+          <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', marginLeft: 'var(--space-md)' }}>
+            <button className="btn glass btn--sm" style={{ borderRadius: 'var(--radius-md)', fontSize: '11px', color: 'white' }} onClick={clearChat}>
+              <Icon name="trash" size={14} /> Clear Chat
+            </button>
+            <button className="btn glass btn--sm" style={{ borderRadius: 'var(--radius-md)', fontSize: '11px', color: 'white' }} onClick={() => setShowSettings(true)}>
+              <Icon name="settings" size={14} /> API Key
+            </button>
           </div>
         )}
         <div className="chat-input-wrapper">
-          <textarea className="chat-input" placeholder="Ask about rheumatology..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} rows={1} />
-          <button className="chat-send-btn" onClick={() => handleSend()} disabled={!input.trim() || loading}>➤</button>
+          <textarea 
+            className="chat-input" 
+            placeholder="Type your medical question..." 
+            value={input} 
+            onChange={e => setInput(e.target.value)} 
+            onKeyDown={handleKeyDown} 
+            rows={1} 
+          />
+          <button 
+            className="chat-send-btn" 
+            onClick={() => handleSend()} 
+            disabled={!input.trim() || loading}
+            style={{ width: '52px', height: '52px', borderRadius: 'var(--radius-xl)' }}
+          >
+            <Icon name="arrow-up" size={22} />
+          </button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navig
 import { App as CapacitorApp } from '@capacitor/app';
 import { Dialog } from '@capacitor/dialog';
 import { useAuth } from './context/AuthContext';
+import { SubscriptionProvider } from './context/SubscriptionContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Diseases from './pages/Diseases';
@@ -135,15 +136,15 @@ export default function App() {
   const showDisclaimer = user && !disclaimerAccepted;
 
   return (
-    <>
+    <SubscriptionProvider>
       {showDisclaimer && <DisclaimerModal onAccept={() => setDisclaimerAccepted(true)} onDecline={handleDecline} />}
       <Router>
         <HardwareBackButton />
         <Routes>
           {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify" element={<VerifyEmail />} />
+          <Route path="/login" element={<Layout><Login /></Layout>} />
+          <Route path="/register" element={<Layout><Register /></Layout>} />
+          <Route path="/verify" element={<Layout><VerifyEmail /></Layout>} />
           
           {/* Protected App Routes */}
           <Route path="/*" element={
@@ -168,6 +169,6 @@ export default function App() {
           } />
         </Routes>
       </Router>
-    </>
+    </SubscriptionProvider>
   );
 }

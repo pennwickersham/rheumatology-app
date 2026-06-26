@@ -43,6 +43,17 @@ export function AuthProvider({ children }) {
       } catch (e) {
         console.error('Failed to parse saved user', e);
       }
+    } else {
+      // Auto-login default user for first-time visitors
+      const defaultUser = {
+        id: 'default_user',
+        name: 'User',
+        email: 'user@example.com',
+        zip: '90210',
+        diseases: ['ra', 'sle'],
+        verified: true
+      };
+      setUser(defaultUser);
     }
     setLoading(false);
   }, []);

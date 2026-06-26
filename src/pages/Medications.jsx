@@ -56,127 +56,207 @@ export default function Medications() {
     const sectionOrder = getSectionPriority();
 
     return (
-      <div className="page-enter">
+      <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)' }}>
         <button className="back-btn" onClick={() => navigate('/medications')}>
-          ← Back to Medications
+          <Icon name="arrow-left" size={16} />
+          Back to Medications
         </button>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-md)',
-          marginBottom: 'var(--space-sm)',
+        <div className="glass-morphism" style={{
+          padding: 'var(--space-xl) var(--space-lg)',
+          borderRadius: 'var(--radius-2xl)',
+          marginBottom: 'var(--space-xl)',
+          border: '1px solid var(--border-light)',
+          background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)'
         }}>
-          <span style={{ fontSize: '2.5rem', color: 'var(--info)' }}>
-            <Icon name={selectedMed.icon} size={40} />
-          </span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-lg)',
+          }}>
+            <div className="flex-center" style={{ 
+              width: '64px', 
+              height: '64px', 
+              borderRadius: 'var(--radius-xl)',
+              background: 'var(--bg-glass)',
+              color: 'var(--accent-primary)',
+              boxShadow: 'var(--shadow-glow)'
+            }}>
+              <Icon name={selectedMed.icon} size={32} />
+            </div>
+            <div>
+              <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 800, lineHeight: 1.2 }}>{selectedMed.genericName}</h1>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', marginTop: '4px' }}>
+                {selectedMed.brandNames.join(', ')}
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-lg)', flexWrap: 'wrap' }}>
+            <span className="badge glass" style={{ color: 'var(--accent-primary)' }}>
+              <Icon name="info" size={12} />
+              {drugClass?.name}
+            </span>
+          </div>
+        </div>
+
+        {/* Side Effects */}
+        <div className="section-header stagger-item">
+          <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)' }}>Safety Profile</h2>
+        </div>
+
+        <div className="card glass-morphism stagger-item" style={{ marginBottom: 'var(--space-2xl)', padding: 'var(--space-xl)' }}>
+          <div style={{ marginBottom: 'var(--space-xl)' }}>
+            <h4 style={{ 
+              fontSize: 'var(--font-xs)', 
+              fontWeight: 700, 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.05em',
+              color: 'var(--warning)', 
+              marginBottom: 'var(--space-md)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <Icon name="zap" size={14} />
+              Common Side Effects
+            </h4>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+              {selectedMed.commonSideEffects.map(se => (
+                <span key={se} className="badge" style={{ 
+                  padding: '8px 14px', 
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  color: 'var(--warning)',
+                  border: '1px solid rgba(245, 158, 11, 0.15)',
+                  fontSize: 'var(--font-xs)'
+                }}>{se}</span>
+              ))}
+            </div>
+          </div>
+
           <div>
-            <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 700 }}>{selectedMed.genericName}</h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)' }}>
-              {selectedMed.brandNames.join(', ')}
-            </p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-lg)', flexWrap: 'wrap' }}>
-          <span className="badge badge--primary">{drugClass?.name}</span>
-        </div>
-
-        {/* Known Side Effects from our database */}
-        <div className="section-header">
-          <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)' }}>Known Side Effects</h2>
-        </div>
-
-        <div style={{ marginBottom: 'var(--space-lg)' }}>
-          <h4 style={{ fontSize: 'var(--font-sm)', color: 'var(--text-accent)', marginBottom: 'var(--space-sm)' }}>
-            Common Side Effects
-          </h4>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
-            {selectedMed.commonSideEffects.map(se => (
-              <span key={se} className="badge badge--warning" style={{ padding: '6px 12px' }}>{se}</span>
-            ))}
-          </div>
-
-          <h4 style={{ fontSize: 'var(--font-sm)', color: '#f87171', marginBottom: 'var(--space-sm)' }}>
-            Serious Side Effects
-          </h4>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
-            {selectedMed.seriousSideEffects.map(se => (
-              <span key={se} className="badge badge--danger" style={{ padding: '6px 12px' }}>{se}</span>
-            ))}
+            <h4 style={{ 
+              fontSize: 'var(--font-xs)', 
+              fontWeight: 700, 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.05em',
+              color: 'var(--danger)', 
+              marginBottom: 'var(--space-md)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <Icon name="alert-triangle" size={14} />
+              Serious Side Effects
+            </h4>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+              {selectedMed.seriousSideEffects.map(se => (
+                <span key={se} className="badge" style={{ 
+                  padding: '8px 14px', 
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(244, 63, 94, 0.08)',
+                  color: 'var(--danger)',
+                  border: '1px solid rgba(244, 63, 94, 0.15)',
+                  fontSize: 'var(--font-xs)'
+                }}>{se}</span>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* FDA Package Insert Data */}
-        <div className="section-header">
-          <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)' }}>
-            📋 FDA Package Insert
+        <div className="section-header stagger-item">
+          <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Icon name="clipboard" size={20} color="var(--accent-primary)" />
+            FDA Package Insert
           </h2>
-          <p className="section-header__subtitle">Official prescribing information from the FDA</p>
+          <p className="section-header__subtitle">Official prescribing information for patients</p>
         </div>
 
         {loadingFda ? (
           <div className="loading-container">
             <div className="spinner" />
-            <span>Loading FDA drug label...</span>
+            <span>Connecting to FDA database...</span>
           </div>
         ) : fdaData ? (
-          <div>
-            <div style={{
-              display: 'flex',
-              gap: 'var(--space-sm)',
-              flexWrap: 'wrap',
-              marginBottom: 'var(--space-md)',
+          <div className="stagger-item">
+            <div className="glass flex-between" style={{
+              padding: 'var(--space-md) var(--space-lg)',
+              borderRadius: 'var(--radius-lg)',
+              marginBottom: 'var(--space-lg)',
               fontSize: 'var(--font-xs)',
               color: 'var(--text-muted)',
             }}>
-              <span>Manufacturer: {fdaData.manufacturer}</span>
-              {fdaData.applicationNumber && <span>· NDA: {fdaData.applicationNumber}</span>}
+              <span>Manufacturer: <strong style={{ color: 'var(--text-secondary)' }}>{fdaData.manufacturer}</strong></span>
+              {fdaData.applicationNumber && <span>NDA: <strong style={{ color: 'var(--text-secondary)' }}>{fdaData.applicationNumber}</strong></span>}
             </div>
 
-            {sectionOrder.map(key => {
-              const content = fdaData[key];
-              if (!content) return null;
-              const title = formatSectionTitle(key);
-              const isWarning = key === 'boxedWarning';
-              const isExpanded = expandedSections[key];
-              const isLong = content.length > 300;
+            <div style={{ borderRadius: 'var(--radius-xl)' }}>
+              {sectionOrder.map(key => {
+                const content = fdaData[key];
+                if (!content) return null;
+                const title = formatSectionTitle(key);
+                const isWarning = key === 'boxedWarning';
+                const isExpanded = expandedSections[key];
 
-              return (
-                <div
-                  key={key}
-                  className={`fda-section ${isWarning ? 'fda-section--warning' : ''}`}
-                >
+                return (
                   <div
-                    className="expandable__header"
-                    onClick={() => toggleSection(key)}
-                    style={{ padding: 'var(--space-sm) 0' }}
+                    key={key}
+                    className={`expandable ${isExpanded ? 'open' : ''} ${isWarning ? 'fda-section--warning' : ''}`}
+                    style={{ 
+                      marginBottom: isWarning ? 'var(--space-md)' : 0, 
+                      marginTop: isWarning ? 'var(--space-md)' : 0,
+                      borderRadius: isWarning ? 'var(--radius-md)' : 0,
+                      borderBottom: isWarning ? undefined : (isExpanded || key === sectionOrder[sectionOrder.length - 1] ? 'none' : '1px solid var(--border)'),
+                      borderTop: 'none',
+                      borderLeft: 'none',
+                      borderRight: 'none',
+                      background: isWarning ? undefined : 'transparent',
+                      padding: isWarning ? '0' : 0
+                    }}
                   >
-                    <span className="fda-section__title" style={{ margin: 0, border: 'none', padding: 0 }}>
-                      {title}
-                    </span>
-                    <span className={`expandable__chevron ${isExpanded ? '' : ''}`}>
-                      {isExpanded ? '▲' : '▼'}
-                    </span>
+                    <button
+                      className="expandable__header"
+                      onClick={() => toggleSection(key)}
+                      style={{ padding: isWarning ? undefined : 'var(--space-lg) 0' }}
+                    >
+                      <span className="fda-section__title" style={{ padding: 0 }}>
+                        {title}
+                      </span>
+                      <Icon 
+                        name="chevron-down" 
+                        size={16} 
+                        className="expandable__chevron" 
+                      />
+                    </button>
+                    {isExpanded && (
+                      <div className="expandable__body fda-section__content" style={{ padding: isWarning ? undefined : '0 0 var(--space-lg) 0', animation: 'fadeIn 0.3s ease' }}>
+                        {content}
+                      </div>
+                    )}
                   </div>
-                  {isExpanded && (
-                    <div className="fda-section__content" style={{ paddingBottom: 'var(--space-md)' }}>
-                      {content}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
 
-            <div className="disclaimer" style={{ marginTop: 'var(--space-lg)' }}>
-              <span className="disclaimer__icon">ℹ️</span>
-              Data sourced from the FDA openFDA Drug Label API. For complete prescribing information, consult the full package insert or your pharmacist.
+            <div className="disclaimer" style={{ marginTop: 'var(--space-2xl)' }}>
+              <div className="disclaimer__icon">
+                <Icon name="info" size={20} color="var(--text-muted)" />
+              </div>
+              <div>
+                Data sourced from the FDA openFDA Drug Label API. This information is provided for educational purposes only. Always consult with your healthcare provider or pharmacist before making medical decisions.
+              </div>
             </div>
           </div>
         ) : (
-          <div className="empty-state">
-            <div className="empty-state__icon">📋</div>
-            <div className="empty-state__text">FDA label data unavailable. Try again later.</div>
+          <div className="empty-state stagger-item">
+            <div className="empty-state__icon">
+              <Icon name="clipboard" size={48} />
+            </div>
+            <div className="empty-state__text">FDA label data is currently unavailable.</div>
+            <button className="btn btn--outline mt-lg" onClick={() => loadFdaData(selectedMed)}>
+              Try Again
+            </button>
           </div>
         )}
       </div>
@@ -185,38 +265,43 @@ export default function Medications() {
 
   // List view
   return (
-    <div className="page-enter">
+    <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)' }}>
       <div className="section-header">
-        <h1 className="section-header__title">Medications</h1>
-        <p className="section-header__subtitle">FDA package insert information</p>
+        <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)' }}>Medications</h1>
+        <p className="section-header__subtitle">FDA prescribing information and safety data</p>
       </div>
 
-      <div className="search-bar">
-        <span className="search-bar__icon">🔍</span>
+      <div className="search-bar stagger-item">
+        <span className="search-bar__icon">
+          <Icon name="search" size={18} />
+        </span>
         <input
           className="search-bar__input"
           type="text"
-          placeholder="Search medications..."
+          placeholder="Search by generic or brand name..."
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
       </div>
 
       {!search && (
-        <div className="pill-tabs">
+        <div className="pill-tabs stagger-item" style={{ marginBottom: 'var(--space-lg)' }}>
           <button
             className={`pill-tab ${activeClass === 'all' ? 'active' : ''}`}
             onClick={() => setActiveClass('all')}
+            style={{ padding: '10px 20px' }}
           >
-            All
+            All Drugs
           </button>
           {drugClasses.map(cls => (
             <button
               key={cls.id}
               className={`pill-tab ${activeClass === cls.id ? 'active' : ''}`}
               onClick={() => setActiveClass(cls.id)}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px' }}
             >
-              <Icon name={cls.icon} size={16} style={{ marginRight: '4px' }} /> {cls.name}
+              <Icon name={cls.icon} size={16} /> 
+              <span>{cls.name}</span>
             </button>
           ))}
         </div>
@@ -230,26 +315,39 @@ export default function Medications() {
               key={med.id}
               className="card card--compact stagger-item"
               onClick={() => navigate(`/medications/${med.id}`)}
+              style={{ padding: 'var(--space-lg)' }}
             >
-              <span className="card__icon" style={{ fontSize: '1.5rem', color: 'var(--info)' }}>
-                <Icon name={med.icon} size={24} />
-              </span>
+              <div className="flex-center" style={{ 
+                width: '48px', 
+                height: '48px', 
+                borderRadius: 'var(--radius-lg)',
+                background: 'rgba(14, 165, 233, 0.1)',
+                color: 'var(--accent-primary)',
+                flexShrink: 0
+              }}>
+                <Icon name={med.icon} size={28} />
+              </div>
               <div className="card__content">
-                <div className="card__title" style={{ fontSize: 'var(--font-base)' }}>{med.genericName}</div>
-                <div className="card__subtitle">
-                  {med.brandNames[0]} · <span style={{ color: 'var(--text-muted)' }}>{cls?.name}</span>
+                <div className="card__title" style={{ fontSize: 'var(--font-lg)' }}>{med.genericName}</div>
+                <div className="card__subtitle" style={{ fontSize: 'var(--font-xs)', marginTop: '4px' }}>
+                  {med.brandNames.join(', ')} • <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>{cls?.name}</span>
                 </div>
               </div>
-              <span className="card__arrow">→</span>
+              <Icon name="chevron-right" size={20} className="card__arrow" />
             </div>
           );
         })}
       </div>
 
       {filtered.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-state__icon">💊</div>
-          <div className="empty-state__text">No medications match your search.</div>
+        <div className="empty-state stagger-item">
+          <div className="empty-state__icon">
+            <Icon name="search" size={48} />
+          </div>
+          <div className="empty-state__text">No medications found matching "{search}"</div>
+          <button className="btn btn--outline mt-lg" onClick={() => setSearch('')}>
+            Clear Search
+          </button>
         </div>
       )}
     </div>
