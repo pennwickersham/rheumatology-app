@@ -542,6 +542,35 @@ const Paywall = ({ onClose }) => {
           )}
         </div>
 
+        {/* Legal links - required by App Store Guideline 3.1.2(c) */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '16px',
+          marginBottom: '12px',
+          width: '100%',
+          textAlign: 'center'
+        }}>
+          <a
+            href="https://pennwickersham.github.io/rheumatology-app/privacy-policy.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--accent-primary)', fontSize: '11px', textDecoration: 'underline' }}
+          >
+            Privacy Policy
+          </a>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '9px' }}>•</span>
+          <a
+            href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--accent-primary)', fontSize: '11px', textDecoration: 'underline' }}
+          >
+            Terms of Use (EULA)
+          </a>
+        </div>
+
         {/* Footer */}
         <div style={{ padding: '0 20px 20px' }}>
           {/* Subscription details */}
