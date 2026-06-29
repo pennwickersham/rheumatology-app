@@ -284,23 +284,37 @@ export default function Home() {
       </div>
 
       {/* Medication Classes */}
-      <div className="section-header" style={{ marginTop: 'var(--space-3xl)' }}>
-        <h2 className="section-header__title">Medication Classes</h2>
-        <p className="section-header__subtitle">Browse by pharmacological category</p>
-      </div>
+      <div style={{ marginLeft: 'calc(var(--space-lg) * -1)', marginRight: 'calc(var(--space-lg) * -1)' }}>
+        <div className="section-header" style={{ marginTop: 'var(--space-3xl)', paddingLeft: 'var(--space-lg)', paddingRight: 'var(--space-lg)' }}>
+          <h2 className="section-header__title">Medication Classes</h2>
+          <p className="section-header__subtitle">Browse by pharmacological category</p>
+        </div>
 
-      <div className="pill-tabs" style={{ marginBottom: 'var(--space-2xl)' }}>
-        {drugClasses.map(cls => (
-          <button
-            key={cls.id}
-            className="pill-tab"
-            onClick={() => navigate(`/medications?class=${cls.id}`)}
-            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 24px' }}
-          >
-            <Icon name={cls.icon} size={20} /> 
-            <span>{cls.name}</span>
-          </button>
-        ))}
+        <div className="pill-tabs" style={{ marginBottom: 'var(--space-2xl)' }}>
+          {drugClasses.map((cls, index) => {
+            const isFirst = index === 0;
+            const isLast = index === drugClasses.length - 1;
+
+            return (
+              <button
+                key={cls.id}
+                className="pill-tab"
+                onClick={() => navigate(`/medications?class=${cls.id}`)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '14px 12px',
+                  marginLeft: isFirst ? 'var(--space-lg)' : 0,
+                  marginRight: isLast ? 'var(--space-lg)' : 0,
+                }}
+              >
+                <Icon name={cls.icon} size={20} />
+                <span>{cls.name}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Disclaimer */}
