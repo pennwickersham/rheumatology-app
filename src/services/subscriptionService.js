@@ -9,8 +9,8 @@ import { Purchases, LOG_LEVEL, ENTITLEMENT_VERIFICATION_MODE, PURCHASES_ARE_COMP
 
 // ─── CONFIGURATION ───────────────────────────────────────────────
 // RevenueCat Public SDK API keys
-const REVENUECAT_API_KEY_APPLE = 'appl_your_apple_key_here'; // TODO: Replace with your actual key
-const REVENUECAT_API_KEY_GOOGLE = 'goog_your_google_key_here'; // TODO: Replace with your actual key
+const REVENUECAT_API_KEY_APPLE = 'appl_DiODqIpgdHDjUFlUgRbjSysVfHn';
+const REVENUECAT_API_KEY_GOOGLE = 'goog_TQDgKOopaDVrRrsLrKHGejMTuWS';
 
 const PRODUCT_ID = 'com.rheumcompanion.app.monthly';
 

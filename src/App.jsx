@@ -22,31 +22,46 @@ import VerifyEmail from './pages/VerifyEmail';
 function DisclaimerModal({ onAccept, onDecline }) {
   return (
     <div className="modal-overlay" style={{ zIndex: 9999, alignItems: 'center', justifyContent: 'center' }}>
-      <div className="modal" style={{ width: '90%', maxWidth: '420px', maxHeight: '85vh', overflowY: 'auto', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-xl)', border: '1px solid var(--border)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>
+      <div
+        className="modal"
+        style={{
+          width: '90%',
+          maxWidth: '420px',
+          maxHeight: '80vh',
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--bg-secondary)',
+          borderRadius: 'var(--radius-xl)',
+          padding: 'var(--space-xl)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: 'var(--space-xs)' }}>
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-md)' }}>
           <span style={{ fontSize: '3rem' }}>⚕️</span>
-        </div>
-        <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 700, textAlign: 'center', marginBottom: 'var(--space-md)' }}>
-          Terms & Disclaimers
-        </h2>
-        <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', lineHeight: 1.6, marginBottom: 'var(--space-lg)' }}>
-          <p style={{ marginBottom: 'var(--space-sm)' }}>
-            <strong style={{ color: 'var(--warning)' }}>This app is for informational purposes only and does NOT provide medical advice.</strong>
-          </p>
-          <p style={{ marginBottom: 'var(--space-sm)' }}>
-            The content is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your rheumatologist or other qualified health provider with any questions regarding a medical condition.
-          </p>
-          <p style={{ marginBottom: 'var(--space-sm)' }}>
-            Never disregard professional medical advice or delay seeking it because of something you have read in this app.
-          </p>
-          <div style={{ padding: 'var(--space-md)', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-lg)' }}>
-            <strong style={{ display: 'block', marginBottom: 'var(--space-xs)' }}>Privacy & Cookies</strong>
-            <p style={{ marginBottom: 0, fontSize: '0.9em' }}>
-              Rheum Companion uses local device storage ("cookies") to securely save your profile, personalize your experience, and track basic app usage. By using this app, you consent to our use of these tracking technologies.
+          </div>
+          <h2 style={{ fontSize: 'var(--font-xl)', fontWeight: 700, textAlign: 'center', marginBottom: 'var(--space-md)' }}>
+            Terms & Disclaimers
+          </h2>
+          <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', lineHeight: 1.6, marginBottom: 'var(--space-lg)' }}>
+            <p style={{ marginBottom: 'var(--space-sm)' }}>
+              <strong style={{ color: 'var(--warning)' }}>This app is for informational purposes only and does NOT provide medical advice.</strong>
             </p>
+            <p style={{ marginBottom: 'var(--space-sm)' }}>
+              The content is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your rheumatologist or other qualified health provider with any questions regarding a medical condition.
+            </p>
+            <p style={{ marginBottom: 'var(--space-sm)' }}>
+              Never disregard professional medical advice or delay seeking it because of something you have read in this app.
+            </p>
+            <div style={{ padding: 'var(--space-md)', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-lg)' }}>
+              <strong style={{ display: 'block', marginBottom: 'var(--space-xs)' }}>Privacy & Cookies</strong>
+              <p style={{ marginBottom: 0, fontSize: '0.9em' }}>
+                Rheum Companion uses local device storage ("cookies") to securely save your profile, personalize your experience, and track basic app usage. By using this app, you consent to our use of these tracking technologies.
+              </p>
+            </div>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', marginTop: 'var(--space-md)', paddingTop: 'var(--space-md)', borderTop: '1px solid var(--border)' }}>
           <button
             className="btn btn--primary btn--full"
             onClick={onAccept}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Shield, BookOpen, MessageCircle, Activity, CheckCircle, Loader2, RotateCcw, RefreshCw } from 'lucide-react';
 import { useSubscription } from '../context/SubscriptionContext';
 import { Capacitor } from '@capacitor/core';
@@ -20,13 +20,11 @@ const Paywall = ({ onClose }) => {
     restore,
     refreshOfferings,
     refreshStatusWithSync,
-    activateTestSubscription,
   } = useSubscription();
 
   const [restoring, setRestoring] = useState(false);
   const [error, setError] = useState(null);
   const [restoreMsg, setRestoreMsg] = useState(null);
-  const [retryingOfferings, setRetryingOfferings] = useState(false);
   const [purchaseElapsed, setPurchaseElapsed] = useState(0);
   const [timedOut, setTimedOut] = useState(false);
 
@@ -86,8 +84,7 @@ const Paywall = ({ onClose }) => {
   // When the paywall opens and offerings are null, attempt to fetch them
   useEffect(() => {
     if (!offerings && !offeringsLoading) {
-      setRetryingOfferings(true);
-      refreshOfferings().finally(() => setRetryingOfferings(false));
+      refreshOfferings();
     }
   }, []);
 
@@ -108,25 +105,18 @@ const Paywall = ({ onClose }) => {
     }
   }, [isSubscribed, onClose]);
 
-  const handleRetryOfferings = async () => {
-    setRetryingOfferings(true);
-    setError(null);
-    await refreshOfferings();
-    setRetryingOfferings(false);
-  };
-
-  // Error callback for fire-and-forget purchase
-  const handlePurchaseError = useCallback((errorMsg) => {
-    if (errorMsg !== 'cancelled') {
-      setError(errorMsg || 'Please check your internet connection and try again.');
-    }
-    cancelPurchaseState();
-  }, [cancelPurchaseState]);
-
   const handleSubscribe = async () => {
     setError(null);
     setTimedOut(false);
-    activateTestSubscription();
+
+    const selectedPackage = offerings?.monthly || offerings?.availablePackages?.[0] || null;
+    const result = selectedPackage
+      ? await beginPurchase(selectedPackage)
+      : await beginPurchaseFallback();
+
+    if (!result?.success && result?.error && result.error !== 'cancelled') {
+      setError(result.error);
+    }
   };
 
   const handleCheckAgain = async () => {
@@ -523,7 +513,13 @@ const Paywall = ({ onClose }) => {
               <button
                 onClick={handleSubscribe}
                 disabled={purchaseInProgress}
-                style={secondaryButtonStyle}
+                style={{
+                  ...secondaryButtonStyle,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
               >
                 <RefreshCw size={14} className={purchaseInProgress ? 'animate-spin' : ''} />
                 Try Again

@@ -13,23 +13,6 @@ import {
 const SubscriptionContext = createContext(null);
 
 const PRODUCT_ID = 'com.rheumcompanion.app.monthly';
-const TEST_SUBSCRIPTION_KEY = 'rheumcompanion_test_subscription';
-
-function hasTestSubscriptionOverride() {
-  try {
-    return window.localStorage.getItem(TEST_SUBSCRIPTION_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-function persistTestSubscriptionOverride() {
-  try {
-    window.localStorage.setItem(TEST_SUBSCRIPTION_KEY, 'true');
-  } catch {
-    // Ignore storage failures in temporary test mode.
-  }
-}
 
 export function SubscriptionProvider({ children }) {
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -58,7 +41,7 @@ export function SubscriptionProvider({ children }) {
 
         const status = await checkSubscriptionStatus();
         if (didTimeout) return;
-        setIsSubscribed(status.isActive || hasTestSubscriptionOverride());
+        setIsSubscribed(status.isActive);
         setIsTrialing(status.isTrialing);
 
         // Pre-fetch offerings for the paywall (don't block on this)
@@ -66,6 +49,7 @@ export function SubscriptionProvider({ children }) {
         fetchOfferingsWithRetry(didTimeout);
       } catch (err) {
         console.error('[SubscriptionContext] Init error:', err);
+        // Real subscribers will be detected when SDK eventually initializes.
         if (!didTimeout) setIsSubscribed(false);
       } finally {
         clearTimeout(timeoutId);
@@ -85,6 +69,7 @@ export function SubscriptionProvider({ children }) {
             setOfferings(o);
             setOfferingsLoading(false);
           } else {
+            // First fetch returned null — retry after a delay
             console.warn('[SubscriptionContext] Initial offerings null, retrying in 3s...');
             setTimeout(() => {
               if (cancelled) return;
@@ -111,11 +96,10 @@ export function SubscriptionProvider({ children }) {
 
     async function registerListener() {
       cleanup = await setupCustomerInfoListener(({ isActive, isTrialing: trial }) => {
-        const effectiveActive = isActive || hasTestSubscriptionOverride();
-        console.log('[SubscriptionContext] CustomerInfo listener update: isActive =', effectiveActive);
-        setIsSubscribed(effectiveActive);
+        console.log('[SubscriptionContext] CustomerInfo listener update: isActive =', isActive);
+        setIsSubscribed(isActive);
         setIsTrialing(trial);
-        if (effectiveActive) {
+        if (isActive) {
           setShowPaywall(false);
           setPurchaseInProgress(false);
         }
@@ -222,29 +206,22 @@ export function SubscriptionProvider({ children }) {
 
   const refreshStatus = useCallback(async () => {
     const status = await checkSubscriptionStatus();
-    setIsSubscribed(status.isActive || hasTestSubscriptionOverride());
+    setIsSubscribed(status.isActive);
     setIsTrialing(status.isTrialing);
   }, []);
 
   // Aggressive refresh with cache invalidation
   const refreshStatusWithSync = useCallback(async () => {
     const status = await invalidateAndCheckStatus();
-    const effectiveActive = status.isActive || hasTestSubscriptionOverride();
-    setIsSubscribed(effectiveActive);
+    setIsSubscribed(status.isActive);
     setIsTrialing(status.isTrialing);
-    if (effectiveActive && purchaseInProgress) {
+    if (status.isActive && purchaseInProgress) {
+      // Purchase detected via polling — stop purchase state
       console.log('[SubscriptionContext] Subscription detected via polling — ending purchase state');
       setPurchaseInProgress(false);
     }
-    return { ...status, isActive: effectiveActive };
+    return status;
   }, [purchaseInProgress]);
-
-  const activateTestSubscription = useCallback(() => {
-    persistTestSubscriptionOverride();
-    setIsSubscribed(true);
-    setShowPaywall(false);
-    setPurchaseInProgress(false);
-  }, []);
 
   const value = {
     isSubscribed,
@@ -262,7 +239,6 @@ export function SubscriptionProvider({ children }) {
     refreshOfferings,
     refreshStatus,
     refreshStatusWithSync,
-    activateTestSubscription,
   };
 
   return (
