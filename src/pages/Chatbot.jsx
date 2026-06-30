@@ -1,17 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { sendChatMessage, getApiKey, setApiKey, hasApiKey, suggestedQuestions } from '../api/gemini';
+import { sendChatMessage, suggestedQuestions } from '../api/gemini';
 import { saveToStorage, loadFromStorage } from '../utils/storage';
 import { Share } from '@capacitor/share';
 import { Icon } from '../components/Icons';
+
+// Proxy URL — points to the Cloudflare Worker that holds the API key server-side.
+// The API key NEVER appears in client code.
+// Set VITE_PROXY_URL in .env (local) or Appflow Environment (cloud builds).
+const PROXY_URL = import.meta.env.VITE_PROXY_URL || '';
 
 export default function Chatbot() {
   const [messages, setMessages] = useState(() => loadFromStorage('chat_history', []));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showSettings, setShowSettings] = useState(!hasApiKey());
-  const [apiKeyInput, setApiKeyInput] = useState(getApiKey());
   const messagesEnd = useRef(null);
 
   useEffect(() => {
@@ -24,8 +27,11 @@ export default function Chatbot() {
 
   const handleSend = async (text = input) => {
     if (!text.trim() || loading) return;
-    const key = getApiKey();
-    if (!key) { setShowSettings(true); return; }
+    if (!PROXY_URL) {
+      setError('AI service not configured.');
+      setMessages(prev => [...prev, { role: 'assistant', content: '❌ Error: AI service not configured. Please set VITE_PROXY_URL environment variable.' }]);
+      return;
+    }
 
     const userMsg = { role: 'user', content: text.trim() };
     setMessages(prev => [...prev, userMsg]);
@@ -34,18 +40,13 @@ export default function Chatbot() {
     setError('');
 
     try {
-      const response = await sendChatMessage(key, messages, text.trim());
+      const response = await sendChatMessage(messages, text.trim());
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
     } catch (e) {
       setError(e.message);
       setMessages(prev => [...prev, { role: 'assistant', content: `❌ Error: ${e.message}` }]);
     }
     setLoading(false);
-  };
-
-  const saveKey = () => {
-    setApiKey(apiKeyInput);
-    setShowSettings(false);
   };
 
   const clearChat = () => {
@@ -60,8 +61,8 @@ export default function Chatbot() {
     }
   };
 
-  // Settings panel
-  if (showSettings) {
+  // Check if proxy URL is configured
+  if (!PROXY_URL) {
     return (
       <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)', paddingTop: 'var(--space-lg)', paddingLeft: 'var(--space-lg)', paddingRight: 'var(--space-lg)', overflowY: 'auto', height: '100%' }}>
         <div className="section-header" style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
@@ -77,53 +78,13 @@ export default function Chatbot() {
               <Icon name="chat" size={48} />
             </div>
           </div>
-          <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)', marginBottom: 'var(--space-sm)' }}>RheumBot Setup</h1>
-          <p className="section-header__subtitle">Configure your AI medical companion</p>
+          <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)', marginBottom: 'var(--space-sm)' }}>RheumBot</h1>
+          <p className="section-header__subtitle">AI service not configured</p>
         </div>
 
-        <div className="settings-form glass-morphism">
-          <div className="settings-field">
-            <label className="settings-field__label">Google Gemini API Key</label>
-            <p className="settings-field__description">
-              Get a free API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Google AI Studio</a>.
-              Your key remains on your device and is only used to communicate with Google's secure AI infrastructure.
-            </p>
-            <div className="search-bar" style={{ marginBottom: 0 }}>
-              <span className="search-bar__icon"><Icon name="lock" size={20} /></span>
-              <input 
-                className="search-bar__input" 
-                type="password" 
-                placeholder="Paste your AIza... key here" 
-                value={apiKeyInput} 
-                onChange={e => setApiKeyInput(e.target.value)} 
-              />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-            <button className="btn btn--primary btn--full" onClick={saveKey} disabled={!apiKeyInput.trim()} style={{ height: '56px', borderRadius: 'var(--radius-lg)' }}>
-              <Icon name="check" size={18} />
-              Save & Start Chatting
-            </button>
-            {hasApiKey() && (
-              <button className="btn btn--outline btn--full" onClick={() => setShowSettings(false)} style={{ height: '56px', borderRadius: 'var(--radius-lg)' }}>
-                Cancel
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="stagger-item" style={{ 
-          marginTop: 'var(--space-3xl)', 
-          padding: 'var(--space-xl)',
-          background: 'rgba(14, 165, 233, 0.05)',
-          border: '1px solid rgba(14, 165, 233, 0.1)',
-          borderRadius: 'var(--radius-xl)',
-          textAlign: 'center'
-        }}>
+        <div className="glass-morphism" style={{ padding: 'var(--space-xl)', borderRadius: 'var(--radius-xl)', textAlign: 'center' }}>
           <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-            <Icon name="info" size={16} style={{ marginBottom: 'var(--space-xs)', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
-            RheumBot uses the latest Gemini 1.5 Flash model for fast, accurate medical insights based on FDA labels and PubMed research.
+            The AI service is not yet connected. Please set the VITE_PROXY_URL environment variable.
           </p>
         </div>
       </div>
@@ -132,13 +93,13 @@ export default function Chatbot() {
 
   return (
     <div className="chat-container" style={{
-      marginLeft: showSettings ? 0 : 'calc(-1 * var(--space-lg))',
-      marginRight: showSettings ? 0 : 'calc(-1 * var(--space-lg))',
-      marginTop: showSettings ? 0 : 'calc(-1 * var(--space-xl))',
+      marginLeft: 'calc(-1 * var(--space-lg))',
+      marginRight: 'calc(-1 * var(--space-lg))',
+      marginTop: 'calc(-1 * var(--space-xl))',
       flex: 1,
       display: 'flex',
       flexDirection: 'column',
-      height: showSettings ? 'auto' : '100%'
+      height: '100%'
     }}>
       <div className="chat-messages">
         {messages.length === 0 && (
@@ -185,13 +146,6 @@ export default function Chatbot() {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', marginTop: 'var(--space-xl)' }}>
-              <button className="btn btn--outline btn--sm" style={{ borderRadius: 'var(--radius-md)', padding: '8px 16px' }} onClick={() => setShowSettings(true)}>
-                <Icon name="settings" size={14} /> 
-                API Settings
-              </button>
             </div>
           </div>
         )}
@@ -249,9 +203,6 @@ export default function Chatbot() {
           <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', marginLeft: 'var(--space-md)' }}>
             <button className="btn glass btn--sm" style={{ borderRadius: 'var(--radius-md)', fontSize: '11px', color: 'white' }} onClick={clearChat}>
               <Icon name="trash" size={14} /> Clear Chat
-            </button>
-            <button className="btn glass btn--sm" style={{ borderRadius: 'var(--radius-md)', fontSize: '11px', color: 'white' }} onClick={() => setShowSettings(true)}>
-              <Icon name="settings" size={14} /> API Key
             </button>
           </div>
         )}

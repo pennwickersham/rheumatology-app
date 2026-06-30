@@ -1,33 +1,18 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Icon } from '../components/Icons';
-import { getApiKey, setApiKey, checkDrugInteractions } from '../api/gemini';
+import { checkDrugInteractions } from '../api/gemini';
+
+// Proxy URL — points to the Cloudflare Worker that holds the API key server-side.
+// The API key NEVER appears in client code.
+// Set VITE_PROXY_URL in .env (local) or Appflow Environment (cloud builds).
+const PROXY_URL = import.meta.env.VITE_PROXY_URL || '';
 
 export default function Interactions() {
-  const [apiKeyInput, setApiKeyInput] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
-  const [keyError, setKeyError] = useState(false);
-  
   const [drugs, setDrugs] = useState(['', '']);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    const savedKey = getApiKey();
-    if (savedKey) setApiKeyInput(savedKey);
-    else setShowSettings(true);
-  }, []);
-
-  const handleSaveKey = () => {
-    if (!apiKeyInput.trim()) {
-      setKeyError(true);
-      return;
-    }
-    setApiKey(apiKeyInput.trim());
-    setKeyError(false);
-    setShowSettings(false);
-  };
 
   const handleDrugChange = (index, value) => {
     const newDrugs = [...drugs];
@@ -46,9 +31,8 @@ export default function Interactions() {
   };
 
   const handleCheck = async () => {
-    const savedKey = getApiKey();
-    if (!savedKey) {
-      setShowSettings(true);
+    if (!PROXY_URL) {
+      setError('AI service not configured. Please set VITE_PROXY_URL environment variable.');
       return;
     }
 
@@ -64,7 +48,7 @@ export default function Interactions() {
     setResult(null);
 
     try {
-      const response = await checkDrugInteractions(savedKey, validDrugs);
+      const response = await checkDrugInteractions(validDrugs);
       setResult(response);
     } catch (err) {
       setError(err.message || 'An error occurred while checking interactions.');
@@ -73,49 +57,44 @@ export default function Interactions() {
     }
   };
 
+  // Check if proxy URL is configured
+  if (!PROXY_URL) {
+    return (
+      <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)', paddingTop: 'var(--space-lg)', paddingLeft: 'var(--space-lg)', paddingRight: 'var(--space-lg)' }}>
+        <div className="section-header" style={{ textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
+          <div className="flex-center" style={{ marginBottom: 'var(--space-xl)' }}>
+            <div className="glass flex-center" style={{ 
+              width: '96px', 
+              height: '96px', 
+              borderRadius: 'var(--radius-2xl)',
+              background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(139, 92, 246, 0.2)',
+              color: 'var(--accent-primary)',
+              boxShadow: 'var(--shadow-glow)'
+            }}>
+              <Icon name="activity" size={48} />
+            </div>
+          </div>
+          <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)', marginBottom: 'var(--space-sm)' }}>Interactions</h1>
+          <p className="section-header__subtitle">AI service not configured</p>
+        </div>
+
+        <div className="glass-morphism" style={{ padding: 'var(--space-xl)', borderRadius: 'var(--radius-xl)', textAlign: 'center' }}>
+          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            The AI service is not yet connected. Please set the VITE_PROXY_URL environment variable.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)' }}>
-      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
+      <div className="section-header" style={{ marginBottom: 'var(--space-xl)' }}>
         <div>
           <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)' }}>Interactions</h1>
           <p className="section-header__subtitle">Analyze medication safety with AI</p>
         </div>
-        <button 
-          className="btn glass" 
-          onClick={() => setShowSettings(!showSettings)}
-          style={{ width: '44px', height: '44px', borderRadius: 'var(--radius-md)', padding: 0 }}
-        >
-          <Icon name="settings" size={20} />
-        </button>
       </div>
-
-      {showSettings && (
-        <div className="settings-form glass-morphism stagger-item" style={{ marginBottom: 'var(--space-xl)', border: '1px solid var(--accent-primary)' }}>
-          <div className="flex-between" style={{ marginBottom: 'var(--space-md)' }}>
-            <h3 style={{ fontSize: 'var(--font-base)', fontWeight: 800, color: 'var(--accent-primary)' }}>API Settings</h3>
-            <button className="btn btn--sm" style={{ background: 'none', border: 'none', color: 'var(--text-muted)' }} onClick={() => setShowSettings(false)}>
-              <Icon name="trash" size={14} />
-            </button>
-          </div>
-          <p className="settings-field__description">
-            This feature requires a Google Gemini API key. Your key is stored securely on your device.
-          </p>
-          <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-            <div className="search-bar" style={{ flex: 1, marginBottom: 0 }}>
-              <span className="search-bar__icon"><Icon name="lock" size={18} /></span>
-              <input
-                type="password"
-                placeholder="AIzaSy..."
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                className="search-bar__input"
-              />
-            </div>
-            <button className="btn btn--primary" onClick={handleSaveKey} style={{ borderRadius: 'var(--radius-md)' }}>Save</button>
-          </div>
-          {keyError && <p style={{ color: 'var(--danger)', fontSize: '10px', marginTop: '8px', fontWeight: 600 }}>Please enter a valid API key</p>}
-        </div>
-      )}
 
       <div className="card glass-morphism stagger-item" style={{ marginBottom: 'var(--space-2xl)', padding: 'var(--space-xl)' }}>
         <div className="flex-center" style={{ 
@@ -184,7 +163,7 @@ export default function Interactions() {
         <button 
           className="btn btn--primary btn--full" 
           onClick={handleCheck} 
-          disabled={loading || showSettings}
+          disabled={loading}
           style={{ 
             height: '56px', 
             fontSize: 'var(--font-base)', 

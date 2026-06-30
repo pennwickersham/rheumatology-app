@@ -1,4 +1,7 @@
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent';
+// Proxy URL — points to the Cloudflare Worker that holds the API key server-side.
+// The API key NEVER appears in client code.
+// Set VITE_PROXY_URL in .env (local) or Appflow Environment (cloud builds).
+const PROXY_URL = import.meta.env.VITE_PROXY_URL || '';
 
 const SYSTEM_PROMPT = `You are a medical information assistant for rheumatology patients. You provide helpful, accurate, and easy-to-understand information about rheumatologic diseases and their treatments.
 
@@ -34,15 +37,14 @@ Common rheumatology medication classes you can discuss:
 Format your responses with clear headers and bullet points when appropriate. Keep responses focused and concise.`;
 
 /**
- * Send a message to the Gemini API
- * @param {string} apiKey - Gemini API key
+ * Send a message to the Gemini API via proxy
  * @param {Array<Object>} chatHistory - Previous messages [{role, content}]
  * @param {string} userMessage - New user message
  * @returns {Promise<string>} Assistant response text
  */
-export async function sendChatMessage(apiKey, chatHistory, userMessage) {
-  if (!apiKey) {
-    throw new Error('Gemini API key is required. Please set your API key in Settings.');
+export async function sendChatMessage(chatHistory, userMessage) {
+  if (!PROXY_URL) {
+    throw new Error('AI service not configured. Please set VITE_PROXY_URL environment variable.');
   }
 
   // Build contents array with system instruction and chat history
@@ -62,48 +64,94 @@ export async function sendChatMessage(apiKey, chatHistory, userMessage) {
     parts: [{ text: userMessage }],
   });
 
-  const body = {
-    system_instruction: {
-      parts: [{ text: SYSTEM_PROMPT }],
-    },
-    contents,
-    generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 2048,
-      topP: 0.8,
-    },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-    ],
-  };
+  // Multi-Model Fallback & Retry logic
+  let responseData;
+  let retries = 0;
+  const maxRetries = 5;
+  const modelQueue = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+  let currentModelIndex = 0;
+  
+  while (retries < maxRetries) {
+    const currentModelName = modelQueue[currentModelIndex];
+    try {
+      const body = {
+        systemInstruction: {
+          parts: [{ text: SYSTEM_PROMPT }],
+        },
+        contents,
+        generationConfig: {
+          temperature: 0.3,
+        },
+      };
 
-  try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+      const response = await fetch(
+        `${PROXY_URL}/v1beta/models/${currentModelName}:generateContent`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }
+      );
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      if (response.status === 400) throw new Error('Invalid API key or request. Please check your Gemini API key.');
-      if (response.status === 429) throw new Error('Rate limit exceeded. Please wait a moment and try again.');
-      throw new Error(error.error?.message || `API error: ${response.status}`);
+      if (!response.ok) {
+        const errorBody = await response.text();
+        const err = new Error(`HTTP ${response.status}: ${errorBody}`);
+        err.status = response.status;
+        throw err;
+      }
+
+      responseData = await response.json();
+      break; // Success!
+    } catch (err) {
+      retries++;
+      const errorText = err.message || "";
+      const status = err.status || 0;
+      const is503 = status === 503 || errorText.includes('503') || errorText.includes('demand');
+      const is404 = status === 404 || errorText.includes('404') || errorText.includes('not found') || errorText.includes('not supported');
+      
+      if ((is503 || is404) && retries < maxRetries) {
+        if (currentModelIndex < modelQueue.length - 1) {
+          console.log(`Model ${modelQueue[currentModelIndex]} failed (${is404 ? '404' : '503'}). Trying ${modelQueue[currentModelIndex + 1]}...`);
+          currentModelIndex++;
+        }
+        
+        console.log(`Retry ${retries}/${maxRetries} using ${modelQueue[currentModelIndex]}...`);
+        await new Promise(resolve => setTimeout(resolve, 2000 * retries)); 
+        continue;
+      }
+      
+      // Sanitize error messages
+      let errorMsg;
+      const rawMsg = errorText.toLowerCase();
+      
+      if (rawMsg.includes('api key') || rawMsg.includes('api_key') || rawMsg.includes('unauthorized') || rawMsg.includes('403')) {
+        errorMsg = "The AI service is temporarily unavailable. Please try again later.";
+      } else if (rawMsg.includes('quota') || rawMsg.includes('rate limit') || rawMsg.includes('429')) {
+        errorMsg = "The AI service is experiencing high demand. Please wait a moment and try again.";
+      } else if (rawMsg.includes('network') || rawMsg.includes('fetch') || rawMsg.includes('failed to fetch') || rawMsg.includes('timeout')) {
+        errorMsg = "Unable to connect to the AI service. Please check your internet connection and try again.";
+      } else if (rawMsg.includes('safety') || rawMsg.includes('blocked') || rawMsg.includes('harm')) {
+        errorMsg = "I wasn't able to respond to that particular question. Could you try rephrasing it?";
+      } else if (rawMsg.includes('503') || rawMsg.includes('overloaded') || rawMsg.includes('unavailable')) {
+        errorMsg = "The AI service is temporarily unavailable. Please try again in a few moments.";
+      } else if (rawMsg.includes('404') || rawMsg.includes('not found') || rawMsg.includes('not supported')) {
+        errorMsg = "The AI service is being updated. Please try again shortly.";
+      } else {
+        errorMsg = "Something went wrong. Please try again.";
+      }
+      throw new Error(errorMsg);
     }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!text) throw new Error('No response generated. The model may have blocked this request.');
-
-    return text;
-  } catch (error) {
-    console.error('Gemini API error:', error);
-    throw error;
   }
+
+  // Extract text from response JSON
+  let replyText = '';
+  const parts = responseData?.candidates?.[0]?.content?.parts || [];
+  replyText = parts
+    .filter(p => p.text && !p.thought)
+    .map(p => p.text)
+    .join('\n') || "I'm sorry, I couldn't generate a response.";
+
+  return replyText;
 }
 
 /**
@@ -142,11 +190,11 @@ export const suggestedQuestions = [
 ];
 
 /**
- * Check drug interactions using Gemini
+ * Check drug interactions using Gemini via proxy
  */
-export async function checkDrugInteractions(apiKey, drugsList) {
-  if (!apiKey) {
-    throw new Error('Gemini API key is required. Please set your API key in Settings.');
+export async function checkDrugInteractions(drugsList) {
+  if (!PROXY_URL) {
+    throw new Error('AI service not configured. Please set VITE_PROXY_URL environment variable.');
   }
   
   if (!drugsList || drugsList.length < 2) {
@@ -164,40 +212,78 @@ Your task is to analyze potential interactions between the provided list of medi
 5. If no known interactions exist, state that clearly but include a disclaimer that this does not guarantee absolute safety.
 6. Double-check for dangerous rheumatology-specific interactions (e.g., MTX and Trimethoprim/Sulfamethoxazole or NSAIDs).`;
 
-  const body = {
-    system_instruction: { parts: [{ text: interactionPrompt }] },
-    contents: [ { role: 'user', parts: [{ text: userMessage }] } ],
-    generationConfig: { temperature: 0.1, maxOutputTokens: 1024 },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
-    ],
-  };
+  // Multi-Model Fallback & Retry logic
+  let responseData;
+  let retries = 0;
+  const maxRetries = 5;
+  const modelQueue = ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+  let currentModelIndex = 0;
+  
+  while (retries < maxRetries) {
+    const currentModelName = modelQueue[currentModelIndex];
+    try {
+      const body = {
+        systemInstruction: { parts: [{ text: interactionPrompt }] },
+        contents: [ { role: 'user', parts: [{ text: userMessage }] } ],
+        generationConfig: { temperature: 0.1 },
+      };
 
-  try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+      const response = await fetch(
+        `${PROXY_URL}/v1beta/models/${currentModelName}:generateContent`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }
+      );
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      if (response.status === 400) throw new Error('Invalid API key or request.');
-      if (response.status === 429) throw new Error('Rate limit exceeded.');
-      throw new Error(error.error?.message || `API error: ${response.status}`);
+      if (!response.ok) {
+        const errorBody = await response.text();
+        const err = new Error(`HTTP ${response.status}: ${errorBody}`);
+        err.status = response.status;
+        throw err;
+      }
+
+      responseData = await response.json();
+      break; // Success!
+    } catch (err) {
+      retries++;
+      const errorText = err.message || "";
+      const status = err.status || 0;
+      const is503 = status === 503 || errorText.includes('503') || errorText.includes('demand');
+      const is404 = status === 404 || errorText.includes('404') || errorText.includes('not found') || errorText.includes('not supported');
+      
+      if ((is503 || is404) && retries < maxRetries) {
+        if (currentModelIndex < modelQueue.length - 1) {
+          console.log(`Model ${modelQueue[currentModelIndex]} failed (${is404 ? '404' : '503'}). Trying ${modelQueue[currentModelIndex + 1]}...`);
+          currentModelIndex++;
+        }
+        
+        console.log(`Retry ${retries}/${maxRetries} using ${modelQueue[currentModelIndex]}...`);
+        await new Promise(resolve => setTimeout(resolve, 2000 * retries)); 
+        continue;
+      }
+      
+      // Sanitize error messages
+      let errorMsg;
+      const rawMsg = errorText.toLowerCase();
+      
+      if (rawMsg.includes('api key') || rawMsg.includes('api_key') || rawMsg.includes('unauthorized') || rawMsg.includes('403')) {
+        errorMsg = "The AI service is temporarily unavailable. Please try again later.";
+      } else if (rawMsg.includes('quota') || rawMsg.includes('rate limit') || rawMsg.includes('429')) {
+        errorMsg = "The AI service is experiencing high demand. Please wait a moment and try again.";
+      } else if (rawMsg.includes('network') || rawMsg.includes('fetch') || rawMsg.includes('failed to fetch') || rawMsg.includes('timeout')) {
+        errorMsg = "Unable to connect to the AI service. Please check your internet connection and try again.";
+      } else {
+        errorMsg = "Something went wrong. Please try again.";
+      }
+      throw new Error(errorMsg);
     }
-
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) throw new Error('No interaction data returned.');
-    
-    return text;
-  } catch (error) {
-    console.error('Interaction API error:', error);
-    throw error;
   }
+
+  const text = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('No interaction data returned.');
+  
+  return text;
 }
 
