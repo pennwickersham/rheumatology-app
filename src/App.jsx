@@ -15,6 +15,7 @@ import Chatbot from './pages/Chatbot';
 import Tracker from './pages/Tracker';
 import Interactions from './pages/Interactions';
 import ClinicalTrials from './pages/ClinicalTrials';
+import Assessments from './pages/Assessments';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
@@ -178,6 +179,7 @@ export default function App() {
                   <Route path="/tracker" element={<Tracker />} />
                   <Route path="/interactions" element={<Interactions />} />
                   <Route path="/clinical-trials" element={<ClinicalTrials />} />
+                  <Route path="/assessments" element={<Assessments />} />
                 </Routes>
               </Layout>
             </RequireAuth>

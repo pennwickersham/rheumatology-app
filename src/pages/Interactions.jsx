@@ -1,18 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Icon } from '../components/Icons';
 import { checkDrugInteractions } from '../api/gemini';
 
 // Proxy URL — points to the Cloudflare Worker that holds the API key server-side.
 // The API key NEVER appears in client code.
-// Set VITE_PROXY_URL in .env (local) or Appflow Environment (cloud builds).
+// Set VITE_PROXY_URL and VITE_APP_TOKEN in .env (local) or Appflow Environment (cloud builds).
 const PROXY_URL = import.meta.env.VITE_PROXY_URL || '';
+const APP_TOKEN = import.meta.env.VITE_APP_TOKEN || '';
 
 export default function Interactions() {
   const [drugs, setDrugs] = useState(['', '']);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
+  const abortRef = useRef(null);
 
   const handleDrugChange = (index, value) => {
     const newDrugs = [...drugs];
@@ -44,16 +47,27 @@ export default function Interactions() {
     }
 
     setLoading(true);
+    setIsStreaming(true);
     setError('');
     setResult(null);
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      const response = await checkDrugInteractions(validDrugs);
-      setResult(response);
+      const responseText = await checkDrugInteractions(
+        validDrugs,
+        (text) => setResult(text),
+        controller.signal
+      );
+      setResult(responseText);
     } catch (err) {
+      if (err.name === 'AbortError') return;
       setError(err.message || 'An error occurred while checking interactions.');
     } finally {
       setLoading(false);
+      setIsStreaming(false);
+      abortRef.current = null;
     }
   };
 
@@ -74,7 +88,7 @@ export default function Interactions() {
               <Icon name="activity" size={48} />
             </div>
           </div>
-          <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)', marginBottom: 'var(--space-sm)' }}>Interactions</h1>
+          <h2 className="section-header__title" style={{ fontSize: 'var(--font-3xl)', marginBottom: 'var(--space-sm)' }}>Interactions</h2>
           <p className="section-header__subtitle">AI service not configured</p>
         </div>
 
@@ -91,7 +105,7 @@ export default function Interactions() {
     <div className="page-enter" style={{ paddingBottom: 'var(--space-3xl)' }}>
       <div className="section-header" style={{ marginBottom: 'var(--space-xl)' }}>
         <div>
-          <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)' }}>Interactions</h1>
+          <h2 className="section-header__title" style={{ fontSize: 'var(--font-3xl)' }}>Interactions</h2>
           <p className="section-header__subtitle">Analyze medication safety with AI</p>
         </div>
       </div>
@@ -126,6 +140,7 @@ export default function Interactions() {
                   value={drug}
                   onChange={(e) => handleDrugChange(index, e.target.value)}
                   className="search-bar__input"
+                  disabled={loading}
                 />
               </div>
               {drugs.length > 2 && (
@@ -133,6 +148,7 @@ export default function Interactions() {
                   className="btn glass" 
                   onClick={() => removeDrugField(index)}
                   style={{ width: '48px', color: 'var(--danger)', borderRadius: 'var(--radius-md)' }}
+                  disabled={loading}
                 >
                   <Icon name="trash" size={18} />
                 </button>
@@ -142,7 +158,7 @@ export default function Interactions() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-xl)', marginBottom: 'var(--space-2xl)' }}>
-          <button className="btn btn--outline btn--sm" onClick={addDrugField} style={{ borderStyle: 'dashed', borderRadius: 'var(--radius-md)', padding: '10px 20px' }}>
+          <button className="btn btn--outline btn--sm" onClick={addDrugField} style={{ borderStyle: 'dashed', borderRadius: 'var(--radius-md)', padding: '10px 20px' }} disabled={loading}>
             <Icon name="plus" size={14} />
             Add Medication
           </button>
@@ -197,6 +213,7 @@ export default function Interactions() {
           
           <div className="markdown-content">
             <ReactMarkdown>{result}</ReactMarkdown>
+            {isStreaming && '…'}
           </div>
 
           <div className="disclaimer" style={{ marginTop: 'var(--space-2xl)' }}>

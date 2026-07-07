@@ -3,6 +3,7 @@ import { Lock } from 'lucide-react';
 import { diseases } from '../data/diseases';
 import { drugClasses } from '../data/medications';
 import { Icon } from '../components/Icons';
+import { ReviewedBadge, BrandFooter } from '../components/ReviewedBadge';
 import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../context/SubscriptionContext';
 
@@ -333,6 +334,9 @@ export default function Home() {
           This application provides educational information only and is not a substitute for professional medical advice, diagnosis, or treatment.
         </p>
       </div>
+      
+      <ReviewedBadge date="July 2026" />
+      <BrandFooter />
     </div>
   );
 }

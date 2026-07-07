@@ -12,6 +12,7 @@ const navItems = [
   { path: '/', iconName: 'home', label: 'Home', gated: false },
   { path: '/diseases', iconName: 'bone', label: 'Diseases', gated: false },
   { path: '/medications', iconName: 'pill', label: 'Meds', gated: false },
+  { path: '/assessments', iconName: 'clipboard', label: 'Scores', gated: false },
   { path: '/symptom-lookup', iconName: 'search', label: 'Lookup', gated: false },
   { path: '/tracker', iconName: 'activity', label: 'Tracker', gated: true },
   { path: '/chatbot', iconName: 'chat', label: 'Chat', gated: true },

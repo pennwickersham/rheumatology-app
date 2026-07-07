@@ -1,21 +1,28 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { sendChatMessage, suggestedQuestions } from '../api/gemini';
 import { saveToStorage, loadFromStorage } from '../utils/storage';
+import { scanForRedFlags } from '../utils/redFlagScan';
+import RedFlagAlert from '../components/RedFlagAlert';
 import { Share } from '@capacitor/share';
 import { Icon } from '../components/Icons';
 
 // Proxy URL — points to the Cloudflare Worker that holds the API key server-side.
 // The API key NEVER appears in client code.
-// Set VITE_PROXY_URL in .env (local) or Appflow Environment (cloud builds).
+// Set VITE_PROXY_URL and VITE_APP_TOKEN in .env (local) or Appflow Environment (cloud builds).
 const PROXY_URL = import.meta.env.VITE_PROXY_URL || '';
+const APP_TOKEN = import.meta.env.VITE_APP_TOKEN || '';
 
 export default function Chatbot() {
   const [messages, setMessages] = useState(() => loadFromStorage('chat_history', []));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [redFlag, setRedFlag] = useState(null);
   const messagesEnd = useRef(null);
+  const navigate = useNavigate();
+  const abortRef = useRef(null);
 
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: 'smooth' });
@@ -25,8 +32,14 @@ export default function Chatbot() {
     saveToStorage('chat_history', messages);
   }, [messages]);
 
-  const handleSend = async (text = input) => {
+  const handleSend = useCallback(async (text = input) => {
     if (!text.trim() || loading) return;
+    
+    const rf = scanForRedFlags(text);
+    if (rf) {
+      setRedFlag(rf);
+    }
+    
     if (!PROXY_URL) {
       setError('AI service not configured.');
       setMessages(prev => [...prev, { role: 'assistant', content: '❌ Error: AI service not configured. Please set VITE_PROXY_URL environment variable.' }]);
@@ -39,15 +52,38 @@ export default function Chatbot() {
     setLoading(true);
     setError('');
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      const response = await sendChatMessage(messages, text.trim());
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
-    } catch (e) {
-      setError(e.message);
-      setMessages(prev => [...prev, { role: 'assistant', content: `❌ Error: ${e.message}` }]);
+      // Placeholder message that streaming updates in place.
+      const msgIndexRef = { current: -1 };
+      setMessages(prev => {
+        msgIndexRef.current = prev.length;
+        return [...prev, { role: 'assistant', content: '', isStreaming: true }];
+      });
+      const updateStreaming = (text) => {
+        setMessages(prev => prev.map((m, i) => (i === msgIndexRef.current ? { ...m, content: text } : m)));
+      };
+
+      const responseText = await sendChatMessage(
+        messages,
+        text.trim(),
+        updateStreaming,
+        controller.signal
+      );
+
+      // Finalize: clear streaming flag.
+      setMessages(prev => prev.map((m, i) => (i === msgIndexRef.current ? { role: 'assistant', content: responseText } : m)));
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      setError(err.message);
+      setMessages(prev => [...prev, { role: 'assistant', content: `❌ Error: ${err.message}`, isError: true }]);
+    } finally {
+      setLoading(false);
+      abortRef.current = null;
     }
-    setLoading(false);
-  };
+  }, [input, loading, messages]);
 
   const clearChat = () => {
     setMessages([]);
@@ -78,7 +114,7 @@ export default function Chatbot() {
               <Icon name="chat" size={48} />
             </div>
           </div>
-          <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)', marginBottom: 'var(--space-sm)' }}>RheumBot</h1>
+          <h2 className="section-header__title" style={{ fontSize: 'var(--font-3xl)', marginBottom: 'var(--space-sm)' }}>RheumBot</h2>
           <p className="section-header__subtitle">AI service not configured</p>
         </div>
 
@@ -109,7 +145,7 @@ export default function Chatbot() {
                 width: '80px', 
                 height: '80px', 
                 borderRadius: 'var(--radius-xl)',
-                background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+                background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%',
                 boxShadow: 'var(--shadow-glow)',
                 animation: 'pulse 2s infinite ease-in-out'
               }}>
@@ -152,14 +188,36 @@ export default function Chatbot() {
 
         {messages.map((msg, i) => (
           <div key={i} className="stagger-item" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-            <div className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'assistant'}`}>
+            <div className={`chat-bubble chat-bubble--${msg.role === 'user' ? 'user' : 'assistant'}`} style={{
+              ...(msg.isError ? { background: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.3)' } : {}),
+              whiteSpace: 'pre-wrap'
+            }}>
               {msg.role === 'assistant' ? (
                 <div className="markdown-content">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  <ReactMarkdown>{msg.content || (msg.isStreaming ? '…' : '')}</ReactMarkdown>
                 </div>
               ) : msg.content}
             </div>
-            {msg.role === 'assistant' && (
+            {msg.isError && (
+              <div style={{ alignSelf: 'flex-start', marginLeft: 'var(--space-md)' }}>
+                <button
+                  onClick={() => {
+                    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+                    if (lastUserMsg) {
+                      setMessages(prev => prev.filter((_, idx) => idx !== i));
+                      setInput(lastUserMsg.content);
+                    }
+                  }}
+                  className="btn btn--sm"
+                  style={{
+                    background: 'none', border: 'none', color: 'var(--warning)', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'left', padding: 0
+                  }}
+                >
+                  Tap to retry
+                </button>
+              </div>
+            )}
+            {msg.role === 'assistant' && !msg.isError && !msg.isStreaming && (
               <div style={{ alignSelf: 'flex-start', paddingLeft: '4px' }}>
                 <button
                   onClick={async () => {
@@ -187,7 +245,7 @@ export default function Chatbot() {
           </div>
         ))}
 
-        {loading && (
+        {loading && !messages[messages.length - 1]?.isStreaming && (
           <div className="chat-bubble chat-bubble--assistant stagger-item" style={{ border: '1px solid var(--border)', background: 'var(--bg-glass)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
@@ -211,9 +269,10 @@ export default function Chatbot() {
             className="chat-input" 
             placeholder="Type your medical question..." 
             value={input} 
-            onChange={e => setInput(e.target.value)} 
+            onChange={(e) => setInput(e.target.value)} 
             onKeyDown={handleKeyDown} 
             rows={1} 
+            disabled={loading}
           />
           <button 
             className="chat-send-btn" 
@@ -225,6 +284,13 @@ export default function Chatbot() {
           </button>
         </div>
       </div>
+      {redFlag && (
+        <RedFlagAlert
+          flag={redFlag}
+          onWhenToCall={() => { setRedFlag(null); navigate('/when-to-call'); }}
+          onClose={() => setRedFlag(null)}
+        />
+      )}
     </div>
   );
 }
