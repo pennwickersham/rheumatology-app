@@ -237,6 +237,45 @@ export default function Diseases() {
             <div className="empty-state__text">No recent articles found for this condition.</div>
           </div>
         )}
+
+        {/* Sources & References */}
+        {selectedDisease.sources && selectedDisease.sources.length > 0 && (
+          <>
+            <div className="section-header stagger-item" style={{ marginTop: 'var(--space-2xl)' }}>
+              <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Icon name="clipboard" size={20} color="var(--accent-primary)" />
+                Sources &amp; References
+              </h2>
+              <p className="section-header__subtitle">Where this information comes from</p>
+            </div>
+            <div className="card glass-morphism stagger-item" style={{ padding: 'var(--space-lg)', display: 'block' }}>
+              <ol style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                {selectedDisease.sources.map((src, i) => (
+                  <li key={i} style={{ fontSize: 'var(--font-sm)', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+                    <a
+                      href={src.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none' }}
+                    >
+                      {src.title}
+                      {' '}<Icon name="external-link" size={12} />
+                    </a>
+                    <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginTop: '2px' }}>{src.publisher}</div>
+                  </li>
+                ))}
+              </ol>
+              <div className="disclaimer" style={{ marginTop: 'var(--space-lg)' }}>
+                <div className="disclaimer__icon">
+                  <Icon name="info" size={20} color="var(--text-muted)" />
+                </div>
+                <div>
+                  Disease overviews and symptom lists in this app were compiled from the references above and reviewed by a board-certified rheumatologist. Research articles are retrieved from PubMed (U.S. National Library of Medicine). This information is educational and is not a substitute for professional medical advice.
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }

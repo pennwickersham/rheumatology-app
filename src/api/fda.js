@@ -53,6 +53,8 @@ export async function getDrugDetails(drugName) {
     patientInfo: cleanFdaText(label.patient_medication_information?.[0] || label.information_for_patients?.[0]),
     lastUpdated: label.effective_time || 'Unknown',
     applicationNumber: label.openfda?.application_number?.[0] || '',
+    // SPL Set ID lets us cite/link the exact label document on DailyMed (NLM)
+    setId: label.set_id || label.openfda?.spl_set_id?.[0] || '',
   };
 }
 

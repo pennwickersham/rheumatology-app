@@ -5,6 +5,14 @@ import { getDrugDetails } from '../api/fda';
 import { formatSectionTitle, getSectionPriority } from '../utils/formatFda';
 import { Icon } from '../components/Icons';
 
+// openFDA effective_time is YYYYMMDD — format for citation display
+function formatLabelDate(raw) {
+  if (!raw || !/^\d{8}$/.test(raw)) return '';
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const m = parseInt(raw.slice(4, 6), 10);
+  return `${months[m - 1] || ''} ${parseInt(raw.slice(6, 8), 10)}, ${raw.slice(0, 4)}`;
+}
+
 export default function Medications() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -162,6 +170,10 @@ export default function Medications() {
               ))}
             </div>
           </div>
+
+          <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-lg)', lineHeight: 1.5 }}>
+            Source: FDA Prescribing Information for {selectedMed.genericName} (see Sources &amp; References below). Physician-reviewed summary.
+          </p>
         </div>
 
         {/* FDA Package Insert Data */}
@@ -239,12 +251,59 @@ export default function Medications() {
               })}
             </div>
 
-            <div className="disclaimer" style={{ marginTop: 'var(--space-2xl)' }}>
+            {/* Sources & References */}
+            <div className="section-header" style={{ marginTop: 'var(--space-2xl)' }}>
+              <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Icon name="clipboard" size={20} color="var(--accent-primary)" />
+                Sources &amp; References
+              </h2>
+              <p className="section-header__subtitle">Where this information comes from</p>
+            </div>
+            <div className="card glass-morphism" style={{ padding: 'var(--space-lg)', display: 'block' }}>
+              <ol style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                <li style={{ fontSize: 'var(--font-sm)', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>
+                    FDA Prescribing Information — {selectedMed.genericName}
+                  </strong>
+                  <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    {fdaData.manufacturer}
+                    {formatLabelDate(fdaData.lastUpdated) ? ` · Label effective ${formatLabelDate(fdaData.lastUpdated)}` : ''}
+                    {fdaData.applicationNumber ? ` · ${fdaData.applicationNumber}` : ''}
+                  </div>
+                  <a
+                    href={fdaData.setId
+                      ? `https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=${fdaData.setId}`
+                      : `https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=${encodeURIComponent(selectedMed.genericName)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none', fontSize: 'var(--font-xs)' }}
+                  >
+                    View official label on DailyMed (NIH) <Icon name="external-link" size={12} />
+                  </a>
+                </li>
+                <li style={{ fontSize: 'var(--font-sm)', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>openFDA Drug Label API</strong>
+                  <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    U.S. Food and Drug Administration — label text above is retrieved live from FDA-published labeling
+                  </div>
+                  <a
+                    href="https://open.fda.gov/apis/drug/label/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none', fontSize: 'var(--font-xs)' }}
+                  >
+                    open.fda.gov <Icon name="external-link" size={12} />
+                  </a>
+                </li>
+              </ol>
+            </div>
+
+            <div className="disclaimer" style={{ marginTop: 'var(--space-lg)' }}>
               <div className="disclaimer__icon">
                 <Icon name="info" size={20} color="var(--text-muted)" />
               </div>
               <div>
-                Data sourced from the FDA openFDA Drug Label API. This information is provided for educational purposes only. Always consult with your healthcare provider or pharmacist before making medical decisions.
+                The Safety Profile summary above is derived from FDA prescribing information and reviewed by a board-certified rheumatologist. Full label text is sourced live from the FDA openFDA Drug Label API. This information is provided for educational purposes only. Always consult with your healthcare provider or pharmacist before making medical decisions.
               </div>
             </div>
           </div>

@@ -74,7 +74,7 @@ const consumeSSE = async (res, onDelta) => {
  * @param {AbortSignal} signal - Optional abort signal
  * @returns {Promise<string>} The full response text
  */
-async function callProxy(body, onDelta, signal) {
+export async function callProxy(body, onDelta, signal) {
   if (!PROXY_URL) {
     throw new Error('AI service not configured. Please set VITE_PROXY_URL environment variable.');
   }

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { sendChatMessage, suggestedQuestions } from '../api/gemini';
+import { suggestedQuestions } from '../api/gemini';
+import { sendGroundedChatMessage } from '../api/ragChat';
 import { saveToStorage, loadFromStorage } from '../utils/storage';
 import { scanForRedFlags } from '../utils/redFlagScan';
 import RedFlagAlert from '../components/RedFlagAlert';
@@ -66,15 +67,17 @@ export default function Chatbot() {
         setMessages(prev => prev.map((m, i) => (i === msgIndexRef.current ? { ...m, content: text } : m)));
       };
 
-      const responseText = await sendChatMessage(
+      const { text: responseText, sources } = await sendGroundedChatMessage(
         messages,
         text.trim(),
         updateStreaming,
         controller.signal
       );
 
-      // Finalize: clear streaming flag.
-      setMessages(prev => prev.map((m, i) => (i === msgIndexRef.current ? { role: 'assistant', content: responseText } : m)));
+      // Finalize: clear streaming flag, attach the sources this answer was grounded in.
+      setMessages(prev => prev.map((m, i) => (i === msgIndexRef.current
+        ? { role: 'assistant', content: responseText, sources: sources || [] }
+        : m)));
     } catch (err) {
       if (err.name === 'AbortError') return;
       setError(err.message);
@@ -154,7 +157,7 @@ export default function Chatbot() {
             </div>
             <h2 style={{ fontSize: 'var(--font-2xl)', fontWeight: 800, marginBottom: 'var(--space-sm)' }}>RheumBot</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-sm)', lineHeight: 1.7, marginBottom: 'var(--space-xl)', maxWidth: '320px', margin: '0 auto var(--space-xl)' }}>
-              Your AI-powered rheumatology expert. Ask about medications, symptoms, or research findings.
+              Ask about the conditions and medications covered in this app. Every answer is grounded in FDA prescribing information, NIH/ACR patient references, and PubMed literature — with sources cited below each response.
             </p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', alignItems: 'center' }}>
@@ -195,6 +198,42 @@ export default function Chatbot() {
               {msg.role === 'assistant' ? (
                 <div className="markdown-content">
                   <ReactMarkdown>{msg.content || (msg.isStreaming ? '…' : '')}</ReactMarkdown>
+                  {!msg.isStreaming && msg.sources && msg.sources.length > 0 && (
+                    <div style={{
+                      marginTop: 'var(--space-md)',
+                      paddingTop: 'var(--space-md)',
+                      borderTop: '1px solid var(--border)',
+                    }}>
+                      <div style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        color: 'var(--text-muted)',
+                        marginBottom: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}>
+                        <Icon name="clipboard" size={12} /> Sources
+                      </div>
+                      <ol style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {msg.sources.map((src, si) => (
+                          <li key={si} style={{ fontSize: '12px', lineHeight: 1.5 }}>
+                            <a
+                              href={src.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: 'var(--accent-primary)', fontWeight: 600, textDecoration: 'none' }}
+                            >
+                              {src.title}
+                            </a>
+                            <span style={{ color: 'var(--text-muted)' }}> — {src.publisher}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
                 </div>
               ) : msg.content}
             </div>
@@ -221,15 +260,18 @@ export default function Chatbot() {
               <div style={{ alignSelf: 'flex-start', paddingLeft: '4px' }}>
                 <button
                   onClick={async () => {
+                    const shareText = msg.sources && msg.sources.length > 0
+                      ? msg.content + '\n\nSources:\n' + msg.sources.map((s, si) => `[${si + 1}] ${s.title} — ${s.publisher} (${s.url})`).join('\n')
+                      : msg.content;
                     try {
                       await Share.share({
                         title: 'RheumBot Output',
-                        text: msg.content,
+                        text: shareText,
                         dialogTitle: 'Share RheumBot output',
                       });
                     } catch (e) {
                       console.error(e);
-                      navigator.clipboard.writeText(msg.content);
+                      navigator.clipboard.writeText(shareText);
                       alert('Copied to clipboard!');
                     }
                   }}

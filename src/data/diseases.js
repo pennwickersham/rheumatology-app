@@ -22,6 +22,11 @@ export const diseases = [
     ],
     commonJoints: ['Hands (MCP, PIP)', 'Wrists', 'Feet (MTP)', 'Knees', 'Ankles', 'Elbows', 'Shoulders'],
     pubmedTerms: 'rheumatoid arthritis patient education',
+    sources: [
+      { title: 'Rheumatoid Arthritis', publisher: 'National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH', url: 'https://www.niams.nih.gov/health-topics/rheumatoid-arthritis' },
+      { title: 'Rheumatoid Arthritis: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/rheumatoidarthritis.html' },
+      { title: 'Rheumatoid Arthritis — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+    ],
     relatedMedications: ['methotrexate', 'hydroxychloroquine', 'sulfasalazine', 'leflunomide', 'adalimumab', 'etanercept', 'infliximab', 'certolizumab', 'golimumab', 'tocilizumab', 'abatacept', 'rituximab', 'sarilumab', 'tofacitinib', 'baricitinib', 'upadacitinib', 'prednisone', 'naproxen', 'celecoxib'],
   },
   {
@@ -46,6 +51,11 @@ export const diseases = [
       'Serositis',
     ],
     pubmedTerms: 'systemic lupus erythematosus patient education',
+    sources: [
+      { title: 'Lupus', publisher: 'National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH', url: 'https://www.niams.nih.gov/health-topics/lupus' },
+      { title: 'Lupus: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/lupus.html' },
+      { title: 'Lupus — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+    ],
     relatedMedications: ['hydroxychloroquine', 'prednisone', 'mycophenolate', 'azathioprine', 'cyclophosphamide', 'tacrolimus', 'voclosporin', 'belimumab', 'anifrolumab', 'rituximab', 'methotrexate', 'naproxen', 'celecoxib', 'ibuprofen'],
   },
   {
@@ -68,6 +78,11 @@ export const diseases = [
       'Reduced range of motion',
     ],
     pubmedTerms: 'psoriatic arthritis patient education',
+    sources: [
+      { title: 'Psoriatic Arthritis', publisher: 'National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH', url: 'https://www.niams.nih.gov/health-topics/psoriatic-arthritis' },
+      { title: 'Psoriatic Arthritis: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/psoriaticarthritis.html' },
+      { title: 'Psoriatic Arthritis — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+    ],
     relatedMedications: ['methotrexate', 'adalimumab', 'etanercept', 'infliximab', 'certolizumab', 'golimumab', 'secukinumab', 'ixekizumab', 'upadacitinib', 'tofacitinib', 'apremilast', 'naproxen', 'celecoxib', 'sulfasalazine', 'leflunomide', 'prednisone'],
   },
   {
@@ -90,6 +105,11 @@ export const diseases = [
       'Difficulty taking deep breaths',
     ],
     pubmedTerms: 'ankylosing spondylitis patient education',
+    sources: [
+      { title: 'Ankylosing Spondylitis', publisher: 'National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH', url: 'https://www.niams.nih.gov/health-topics/ankylosing-spondylitis' },
+      { title: 'Ankylosing Spondylitis: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/ankylosingspondylitis.html' },
+      { title: 'Spondyloarthritis — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+    ],
     relatedMedications: ['naproxen', 'celecoxib', 'indomethacin', 'adalimumab', 'etanercept', 'infliximab', 'certolizumab', 'golimumab', 'secukinumab', 'ixekizumab', 'upadacitinib', 'tofacitinib', 'sulfasalazine', 'prednisone'],
   },
   {
@@ -112,6 +132,11 @@ export const diseases = [
       'Kidney stones',
     ],
     pubmedTerms: 'gout patient education management',
+    sources: [
+      { title: 'Gout', publisher: 'National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH', url: 'https://www.niams.nih.gov/health-topics/gout' },
+      { title: 'Gout: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/gout.html' },
+      { title: 'Gout — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+    ],
     relatedMedications: ['colchicine', 'allopurinol', 'febuxostat', 'pegloticase', 'naproxen', 'indomethacin', 'celecoxib', 'prednisone', 'methylprednisolone'],
   },
   {
@@ -136,6 +161,11 @@ export const diseases = [
       'Persistent cough',
     ],
     pubmedTerms: 'sjogren syndrome patient education',
+    sources: [
+      { title: 'Sjögren\'s Syndrome', publisher: 'National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH', url: 'https://www.niams.nih.gov/health-topics/sjogrens-syndrome' },
+      { title: 'Sjögren\'s Syndrome: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/sjogrenssyndrome.html' },
+      { title: 'Sjögren\'s Disease — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+    ],
     relatedMedications: ['hydroxychloroquine', 'pilocarpine', 'cevimeline', 'prednisone', 'rituximab', 'methotrexate', 'azathioprine', 'mycophenolate'],
   },
   {
@@ -160,6 +190,11 @@ export const diseases = [
       'Joint and muscle pain',
     ],
     pubmedTerms: 'vasculitis patient education',
+    sources: [
+      { title: 'Vasculitis: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/vasculitis.html' },
+      { title: 'Vasculitis — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+      { title: 'Vasculitis Disease Information', publisher: 'Vasculitis Foundation', url: 'https://www.vasculitisfoundation.org' },
+    ],
     relatedMedications: ['prednisone', 'methylprednisolone', 'cyclophosphamide', 'rituximab', 'azathioprine', 'mycophenolate', 'methotrexate', 'tocilizumab'],
   },
   {
@@ -183,6 +218,11 @@ export const diseases = [
     ],
     commonJoints: ['Knees', 'Hips', 'Hands (DIP, PIP, CMC)', 'Spine', 'Feet (1st MTP)'],
     pubmedTerms: 'osteoarthritis patient education',
+    sources: [
+      { title: 'Osteoarthritis', publisher: 'National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH', url: 'https://www.niams.nih.gov/health-topics/osteoarthritis' },
+      { title: 'Osteoarthritis: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/osteoarthritis.html' },
+      { title: 'Osteoarthritis — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+    ],
     relatedMedications: ['naproxen', 'celecoxib', 'meloxicam', 'ibuprofen', 'duloxetine', 'prednisone', 'methylprednisolone'],
   },
   {
@@ -207,6 +247,10 @@ export const diseases = [
       'Depression',
     ],
     pubmedTerms: 'polymyalgia rheumatica patient education management',
+    sources: [
+      { title: 'Polymyalgia Rheumatica: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/polymyalgiarheumatica.html' },
+      { title: 'Polymyalgia Rheumatica — Patient Fact Sheet', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+    ],
     relatedMedications: ['prednisone', 'methylprednisolone', 'methotrexate', 'tocilizumab', 'naproxen', 'ibuprofen'],
   },
   {
@@ -230,6 +274,10 @@ export const diseases = [
     ],
     commonJoints: ['Knees', 'Wrists', 'Ankles', 'Elbows', 'Shoulders', 'Hips'],
     pubmedTerms: 'calcium pyrophosphate deposition disease pseudogout patient education',
+    sources: [
+      { title: 'Calcium Pyrophosphate Deposition (CPPD) — Patient Fact Sheet', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+      { title: 'Calcium Pyrophosphate Deposition Disease', publisher: 'Arthritis Foundation', url: 'https://www.arthritis.org' },
+    ],
     relatedMedications: ['colchicine', 'naproxen', 'indomethacin', 'ibuprofen', 'celecoxib', 'prednisone', 'methylprednisolone'],
   },
   {
@@ -252,6 +300,10 @@ export const diseases = [
       'Muscle spasms',
     ],
     pubmedTerms: 'degenerative disc disease patient education management',
+    sources: [
+      { title: 'Back Pain', publisher: 'National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH', url: 'https://www.niams.nih.gov/health-topics/back-pain' },
+      { title: 'Degenerative Disc Disease — Patient Education (OrthoInfo)', publisher: 'American Academy of Orthopaedic Surgeons', url: 'https://orthoinfo.aaos.org' },
+    ],
     relatedMedications: ['naproxen', 'ibuprofen', 'meloxicam', 'celecoxib', 'duloxetine', 'prednisone', 'methylprednisolone'],
   },
   {
@@ -277,6 +329,11 @@ export const diseases = [
       'Numbness (nerve involvement)',
     ],
     pubmedTerms: 'granulomatosis polyangiitis GPA patient education',
+    sources: [
+      { title: 'Granulomatosis with Polyangiitis (GPA)', publisher: 'Vasculitis Foundation', url: 'https://www.vasculitisfoundation.org' },
+      { title: 'ANCA Vasculitis — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+      { title: 'Vasculitis: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/vasculitis.html' },
+    ],
     relatedMedications: ['prednisone', 'methylprednisolone', 'cyclophosphamide', 'rituximab', 'azathioprine', 'mycophenolate', 'methotrexate'],
   },
   {
@@ -302,6 +359,11 @@ export const diseases = [
       'Restless legs',
     ],
     pubmedTerms: 'fibromyalgia patient education management',
+    sources: [
+      { title: 'Fibromyalgia', publisher: 'National Institute of Arthritis and Musculoskeletal and Skin Diseases (NIAMS), NIH', url: 'https://www.niams.nih.gov/health-topics/fibromyalgia' },
+      { title: 'Fibromyalgia: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/fibromyalgia.html' },
+      { title: 'Fibromyalgia — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
+    ],
     relatedMedications: ['duloxetine', 'naproxen', 'ibuprofen', 'meloxicam', 'celecoxib', 'prednisone'],
   },
 ];

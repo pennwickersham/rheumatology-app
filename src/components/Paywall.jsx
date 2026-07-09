@@ -188,7 +188,7 @@ const Paywall = ({ onClose }) => {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '16px',
-    background: 'rgba(0, 0, 0, 0.6)',
+    background: 'rgba(0, 0, 0, 0.5)',
     backdropFilter: 'blur(6px)',
     WebkitBackdropFilter: 'blur(6px)',
   };
@@ -208,6 +208,8 @@ const Paywall = ({ onClose }) => {
     padding: '24px',
     textAlign: 'center',
     background: 'linear-gradient(135deg, var(--accent-primary) 0%, #9333ea 100%)',
+    position: 'relative',
+    overflow: 'hidden',
   };
 
   const iconBadgeStyle = {
@@ -324,11 +326,11 @@ const Paywall = ({ onClose }) => {
       <div style={overlayStyle}>
         <div style={{ ...panelStyle, maxHeight: 'unset', overflow: 'hidden' }}>
           <div style={heroStyle}>
-            <div>
+            <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={iconBadgeStyle}>
                 <CheckCircle color="#ffffff" size={32} />
               </div>
-              <h2 style={{ color: '#ffffff', fontSize: '24px', fontWeight: 800, marginBottom: '6px' }}>You're Subscribed!</h2>
+              <h2 style={{ color: '#ffffff', fontSize: '20px', fontWeight: 800, marginBottom: '6px' }}>You're Subscribed!</h2>
               <p style={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: '14px', lineHeight: 1.5, margin: 0 }}>
                 Enjoy all premium features of RheumCompanion
               </p>
@@ -366,11 +368,11 @@ const Paywall = ({ onClose }) => {
         
         {/* Header with gradient */}
         <div style={heroStyle}>
-          <div>
+          <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={iconBadgeStyle}>
               <Shield color="#ffffff" size={32} />
             </div>
-            <h2 style={{ color: '#ffffff', fontSize: '24px', fontWeight: 800, marginBottom: '6px' }}>Unlock RheumCompanion Premium</h2>
+            <h2 style={{ color: '#ffffff', fontSize: '20px', fontWeight: 800, marginBottom: '6px' }}>Unlock RheumCompanion</h2>
             <p style={{ color: 'rgba(255, 255, 255, 0.82)', fontSize: '14px', lineHeight: 1.5, margin: 0 }}>
               Your complete rheumatology toolkit
             </p>
@@ -413,7 +415,7 @@ const Paywall = ({ onClose }) => {
         {/* Pricing */}
         <div style={{ padding: '0 20px 8px' }}>
           <div style={cardStyle}>
-            <p style={{ color: 'var(--text-primary)', fontSize: '32px', fontWeight: 800, lineHeight: 1.1, margin: 0 }}>
+            <p style={{ color: 'var(--text-primary)', fontSize: '28px', fontWeight: 800, lineHeight: 1.1, margin: 0 }}>
               $6.99<span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-secondary)' }}>/month</span>
             </p>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: '8px 0 0', lineHeight: 1.5 }}>
@@ -431,7 +433,7 @@ const Paywall = ({ onClose }) => {
         </div>
 
         {/* CTA Buttons */}
-        <div style={{ ...sectionStyle, paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ ...sectionStyle, paddingTop: '6px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <button
             id="subscribe-btn"
             onClick={handleSubscribe}
@@ -534,41 +536,12 @@ const Paywall = ({ onClose }) => {
               textAlign: 'center',
               padding: '10px',
               borderRadius: '10px',
-              color: restoreMsg.includes('restored') ? '#86efac' : 'var(--text-secondary)',
-              background: restoreMsg.includes('restored') ? 'rgba(20, 83, 45, 0.35)' : 'var(--bg-glass)',
+              color: restoreMsg.includes('restored') ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              background: restoreMsg.includes('restored') ? 'rgba(14, 165, 233, 0.1)' : 'var(--bg-glass)',
             }}>
               {restoreMsg}
             </p>
           )}
-        </div>
-
-        {/* Legal links - required by App Store Guideline 3.1.2(c) */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '16px',
-          marginBottom: '12px',
-          width: '100%',
-          textAlign: 'center'
-        }}>
-          <a
-            href="https://pennwickersham.github.io/rheumatology-app/privacy-policy.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--accent-primary)', fontSize: '11px', textDecoration: 'underline' }}
-          >
-            Privacy Policy
-          </a>
-          <span style={{ color: 'var(--text-secondary)', fontSize: '9px' }}>•</span>
-          <a
-            href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: 'var(--accent-primary)', fontSize: '11px', textDecoration: 'underline' }}
-          >
-            Terms of Use (EULA)
-          </a>
         </div>
 
         {/* Footer */}
@@ -585,6 +558,34 @@ const Paywall = ({ onClose }) => {
               </>
             )}
             <p style={{ margin: 0 }}>• Subscription renews unless cancelled at least 24 hours before the end of the current period</p>
+          </div>
+
+          {/* Legal links - required by App Store Guideline 3.1.2(c) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px',
+            marginBottom: '12px',
+            marginTop: '12px'
+          }}>
+            <a
+              href="https://pennwickersham.github.io/rheumatology-app/privacy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--accent-primary)', fontSize: '10px', textDecoration: 'underline' }}
+            >
+              Privacy Policy
+            </a>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '10px' }}>•</span>
+            <a
+              href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--accent-primary)', fontSize: '10px', textDecoration: 'underline' }}
+            >
+              Terms of Use (EULA)
+            </a>
           </div>
 
           {onClose && (
