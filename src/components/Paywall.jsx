@@ -12,6 +12,7 @@ const Paywall = ({ onClose }) => {
   const {
     isSubscribed,
     offerings,
+    productInfo,
     offeringsLoading,
     beginPurchase,
     beginPurchaseFallback,
@@ -22,6 +23,12 @@ const Paywall = ({ onClose }) => {
     refreshStatusWithSync,
   } = useSubscription();
 
+  // Get the selected package from product info or offerings
+  const selectedPackage = productInfo?.package || offerings?.monthly || offerings?.availablePackages?.[0] || null;
+  // Get price string and other details from product info
+  const priceString = productInfo?.priceString || '$6.99';
+  // Check if free trial is available from the package's product
+  const isFreeTrialAvailable = selectedPackage?.product?.introPrice?.price === 0;
   const [restoring, setRestoring] = useState(false);
   const [error, setError] = useState(null);
   const [restoreMsg, setRestoreMsg] = useState(null);
@@ -109,7 +116,6 @@ const Paywall = ({ onClose }) => {
     setError(null);
     setTimedOut(false);
 
-    const selectedPackage = offerings?.monthly || offerings?.availablePackages?.[0] || null;
     const result = selectedPackage
       ? await beginPurchase(selectedPackage)
       : await beginPurchaseFallback();
@@ -416,10 +422,10 @@ const Paywall = ({ onClose }) => {
         <div style={{ padding: '0 20px 8px' }}>
           <div style={cardStyle}>
             <p style={{ color: 'var(--text-primary)', fontSize: '28px', fontWeight: 800, lineHeight: 1.1, margin: 0 }}>
-              $6.99<span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-secondary)' }}>/month</span>
+              {priceString}<span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-secondary)' }}>/month</span>
             </p>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: '8px 0 0', lineHeight: 1.5 }}>
-              7-day free trial, then auto-renewing monthly subscription
+              {isFreeTrialAvailable ? '7-day free trial, then auto-renewing monthly subscription' : 'Auto-renewing monthly subscription'}
             </p>
             
             {isIOS && (
@@ -448,7 +454,7 @@ const Paywall = ({ onClose }) => {
             ) : (
               <>
                 <CheckCircle size={18} color="#ffffff" />
-                Start Free Trial — $6.99/month
+                {isFreeTrialAvailable ? `Start Free Trial — ${priceString}/month` : `Subscribe — ${priceString}/month`}
               </>
             )}
           </button>
@@ -550,7 +556,7 @@ const Paywall = ({ onClose }) => {
           <div style={footerNoteStyle}>
             <p style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 700, margin: '0 0 6px' }}>RheumCompanion Monthly Subscription</p>
             <p style={{ margin: 0 }}>• Duration: 1 month, auto-renewing</p>
-            <p style={{ margin: 0 }}>• Price: $6.99/month</p>
+            <p style={{ margin: 0 }}>• Price: {priceString}/month</p>
             {isIOS && (
               <>
                 <p style={{ margin: 0 }}>• Payment charged to your Apple ID at confirmation of purchase</p>

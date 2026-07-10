@@ -300,6 +300,34 @@ export async function purchaseStoreProduct(productId = PRODUCT_ID) {
 }
 
 /**
+ * Helper to extract product info from offerings
+ * @param {Object} offerings - The offerings object from RevenueCat
+ * @returns {Object|null} Product info with price, priceString, title, etc.
+ */
+export function getProductInfoFromOfferings(offerings) {
+  if (!offerings?.availablePackages?.length) {
+    return null;
+  }
+
+  const pkg = offerings.availablePackages[0];
+  const product = pkg?.product;
+
+  if (!product) {
+    return null;
+  }
+
+  return {
+    price: product.price,
+    priceString: product.priceString,
+    currencyCode: product.currencyCode,
+    title: product.title,
+    description: product.description,
+    identifier: product.identifier,
+    package: pkg
+  };
+}
+
+/**
  * Restore previous purchases (for reinstalls or device switches).
  * @returns {{ isActive: boolean }}
  */

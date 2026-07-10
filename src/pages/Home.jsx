@@ -21,7 +21,9 @@ const quickLinks = [
 export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isSubscribed, isLoading, setShowPaywall } = useSubscription();
+  const { isSubscribed, isLoading, setShowPaywall, productInfo } = useSubscription();
+  // Get price string from product info, fallback to default
+  const priceString = productInfo?.priceString || '$6.99';
   
   // Personalize diseases based on user profile
   let displayDiseases = diseases.slice(0, 4);
@@ -133,7 +135,7 @@ export default function Home() {
           <div style={{ fontSize: 'var(--font-xs)', opacity: 0.85, lineHeight: 1.5 }}>
             {isSubscribed
               ? 'Open your subscription details and management options.'
-              : '$6.99/month with a 7-day free trial. Cancel anytime.'}
+              : `${priceString}/month with a 7-day free trial. Cancel anytime.`}
           </div>
         </div>
         <div style={{
