@@ -55,15 +55,15 @@
       <div class="download-box" id="download">
         <div class="badge-group">
           <!-- App Store Button -->
-          <a href="#" class="store-btn" id="app-store-button">
+          <a href="https://apps.apple.com/us/app/rheumcompanion/id6784212388" target="_blank" rel="noopener" class="store-btn" id="app-store-button">
             <svg viewBox="0 0 384 512"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-48.4-19.1-77.8-19.1-37.9 0-77.4 22.5-96.7 56.4-39.6 69.6-10.2 172.7 27.6 226.7 18.6 26.8 40.7 56.4 69.8 55.4 28-1.1 38.5-18.1 72.4-18.1 34 0 43.4 18.1 72.4 18.1 29.8-1 51-26.8 69.6-53.4 21.6-31.2 30.6-61.4 31-63-.8-.4-60-23-60.6-92.3zm-71.2-187.2c19.5-23.5 30.5-51.1 26.3-81.5-24.3 1-56.1 16.3-73.4 36.7-15.2 17.5-29.2 46.8-24.8 75.9 27.1 2.1 56.7-12 71.9-31.1z"/></svg>
             <div class="store-btn-text">
               <span>Download on the</span>
               <strong>App Store</strong>
             </div>
           </a>
-          <!-- Google Play Button -->
-          <a href="#" class="store-btn" id="google-play-button">
+          <!-- Google Play Button (Pending Approval) -->
+          <a href="#" class="store-btn" id="google-play-button" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('Google Play Store listing is currently pending review. Please check back soon!'); return false;">
             <svg viewBox="0 0 512 512"><path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58 33.2-60.1-60.1L472.2 328c12.7-7.3 20.1-19.6 20.1-35.3 0-15.6-7.4-28-20.1-35.3zm-117.1 88L104.6 499l220.7-126.7-60.1-60.1z"/></svg>
             <div class="store-btn-text">
               <span>Get it on</span>
@@ -72,66 +72,19 @@
           </a>
         </div>
         
-        <!-- QR Code Placeholders -->
+        <!-- QR Codes -->
         <div class="qr-container">
           <div class="qr-item">
             <div class="qr-placeholder" id="qr-app-store">
-              <!-- Decorative/Mock Vector QR Code -->
-              <svg viewBox="0 0 100 100" fill="#0b0f19">
-                <rect x="0" y="0" width="25" height="25" />
-                <rect x="5" y="5" width="15" height="15" fill="#ffffff" />
-                <rect x="0" y="75" width="25" height="25" />
-                <rect x="5" y="80" width="15" height="15" fill="#ffffff" />
-                <rect x="75" y="0" width="25" height="25" />
-                <rect x="80" y="5" width="15" height="15" fill="#ffffff" />
-                <!-- Random dots to mock a QR code -->
-                <rect x="35" y="5" width="5" height="10" />
-                <rect x="45" y="15" width="10" height="5" />
-                <rect x="60" y="10" width="5" height="15" />
-                <rect x="35" y="35" width="15" height="15" />
-                <rect x="60" y="35" width="10" height="5" />
-                <rect x="55" y="45" width="5" height="15" />
-                <rect x="10" y="35" width="15" height="5" />
-                <rect x="5" y="45" width="5" height="10" />
-                <rect x="35" y="60" width="15" height="5" />
-                <rect x="35" y="75" width="5" height="15" />
-                <rect x="45" y="85" width="15" height="5" />
-                <rect x="65" y="75" width="5" height="10" />
-                <rect x="80" y="35" width="10" height="15" />
-                <rect x="85" y="60" width="10" height="5" />
-                <rect x="75" y="80" width="5" height="10" />
-              </svg>
+              <img src="app_store_qr.png" alt="App Store QR Code" style="width: 100px; height: 100px;">
             </div>
             <span class="qr-label">iOS QR Code</span>
           </div>
           <div class="qr-item">
             <div class="qr-placeholder" id="qr-google-play">
-              <!-- Decorative/Mock Vector QR Code -->
-              <svg viewBox="0 0 100 100" fill="#0b0f19">
-                <rect x="0" y="0" width="25" height="25" />
-                <rect x="5" y="5" width="15" height="15" fill="#ffffff" />
-                <rect x="0" y="75" width="25" height="25" />
-                <rect x="5" y="80" width="15" height="15" fill="#ffffff" />
-                <rect x="75" y="0" width="25" height="25" />
-                <rect x="80" y="5" width="15" height="15" fill="#ffffff" />
-                <!-- Random dots to mock a QR code (different pattern) -->
-                <rect x="35" y="10" width="10" height="5" />
-                <rect x="50" y="5" width="5" height="15" />
-                <rect x="60" y="20" width="10" height="5" />
-                <rect x="35" y="35" width="5" height="10" />
-                <rect x="45" y="45" width="15" height="10" />
-                <rect x="15" y="35" width="5" height="15" />
-                <rect x="5" y="55" width="15" height="5" />
-                <rect x="35" y="65" width="10" height="10" />
-                <rect x="55" y="60" width="5" height="15" />
-                <rect x="35" y="85" width="15" height="5" />
-                <rect x="65" y="80" width="5" height="15" />
-                <rect x="80" y="45" width="5" height="15" />
-                <rect x="75" y="65" width="15" height="5" />
-                <rect x="85" y="75" width="10" height="10" />
-              </svg>
+              <img src="google_play_qr_placeholder.png" alt="Google Play QR Code Placeholder" style="width: 100px; height: 100px; opacity: 0.8;">
             </div>
-            <span class="qr-label">Android QR Code</span>
+            <span class="qr-label">Android (Pending)</span>
           </div>
         </div>
       </div>
