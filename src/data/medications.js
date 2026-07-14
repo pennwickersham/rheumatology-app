@@ -377,6 +377,16 @@ export const medications = [
     seriousSideEffects: ['Serious infections', 'Exacerbation of inflammatory bowel disease', 'Hypersensitivity/anaphylaxis', 'Neutropenia'],
     icon: '🧬',
   },
+  {
+    id: 'guselkumab',
+    genericName: 'Guselkumab',
+    brandNames: ['Tremfya'],
+    drugClass: 'biologics',
+    fdaSearchTerm: 'guselkumab',
+    commonSideEffects: ['Upper respiratory infections', 'Headache', 'Injection site reactions', 'Joint pain (arthralgia)', 'Bronchitis', 'Diarrhea', 'Gastroenteritis', 'Tinea (fungal skin) infections', 'Herpes simplex infections'],
+    seriousSideEffects: ['Serious infections', 'Hypersensitivity/anaphylaxis', 'Tuberculosis (evaluate before starting)', 'Liver enzyme elevations'],
+    icon: 'dna',
+  },
 
   // Other / Supportive
   {

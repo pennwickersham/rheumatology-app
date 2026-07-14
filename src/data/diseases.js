@@ -83,7 +83,7 @@ export const diseases = [
       { title: 'Psoriatic Arthritis: MedlinePlus Health Topic', publisher: 'U.S. National Library of Medicine', url: 'https://medlineplus.gov/psoriaticarthritis.html' },
       { title: 'Psoriatic Arthritis — Patient Education', publisher: 'American College of Rheumatology', url: 'https://rheumatology.org/patients' },
     ],
-    relatedMedications: ['methotrexate', 'adalimumab', 'etanercept', 'infliximab', 'certolizumab', 'golimumab', 'secukinumab', 'ixekizumab', 'upadacitinib', 'tofacitinib', 'apremilast', 'naproxen', 'celecoxib', 'sulfasalazine', 'leflunomide', 'prednisone'],
+    relatedMedications: ['methotrexate', 'adalimumab', 'etanercept', 'infliximab', 'certolizumab', 'golimumab', 'secukinumab', 'ixekizumab', 'guselkumab', 'upadacitinib', 'tofacitinib', 'apremilast', 'naproxen', 'celecoxib', 'sulfasalazine', 'leflunomide', 'prednisone'],
   },
   {
     id: 'ankylosing-spondylitis',

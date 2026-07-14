@@ -9,10 +9,18 @@ import { askGemini } from './api/gemini.js'
 // Set up the plain language explanation provider for interaction check
 setExplainProvider((prompt) => askGemini(prompt));
 
-createRoot(document.getElementById('root')).render(
+const root = createRoot(document.getElementById('root'));
+root.render(
   <StrictMode>
     <AuthProvider>
       <App />
     </AuthProvider>
   </StrictMode>,
-)
+);
+
+// Remove initial loader
+const initialLoader = document.getElementById('initial-loader');
+if (initialLoader) {
+  initialLoader.remove();
+}
+
