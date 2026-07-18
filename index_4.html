@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ===== SEO (ecosystem keywords included; RheumCompanion stays primary) ===== -->
+  <title>RheumCompanion — Your Rheumatology Health Companion</title>
+  <meta name="description" content="Evidence-based rheumatology encyclopedia, AI Q&A assistant, symptom & flare tracker, drug interaction checker, and clinical trial finder. Part of the Resilient Path family of patient tools, with the SootheQuest coping-skills game and The Resilient Path book & app for chronic pain.">
+  <meta name="keywords" content="rheumatology, arthritis, lupus, symptom tracker, drug interaction, clinical trials, medical reference, chronic pain book, chronic illness game, The Resilient Path, SootheQuest">
+  <meta name="theme-color" content="#0a0e1a">
+
+  <!-- Open Graph / social sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="RheumCompanion — Your Rheumatology Health Companion">
+  <meta property="og:description" content="Track flares, check drug interactions, and prepare for appointments. Part of the Resilient Path family of patient tools.">
+  <meta property="og:url" content="https://pennwickersham.github.io/rheumatology-app/">
+  <meta property="og:image" content="https://pennwickersham.github.io/rheumatology-app/app_icon.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://pennwickersham.github.io/rheumatology-app/">
+  <link rel="icon" href="app_icon.png" type="image/png">
+
+  <!-- Structured data: connects the three products for search engines -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "RheumCompanion",
+    "operatingSystem": "iOS",
+    "applicationCategory": "HealthApplication",
+    "description": "Evidence-based disease education, symptom and flare tracking, drug interaction checking, and clinical trial search for rheumatology patients.",
+    "url": "https://pennwickersham.github.io/rheumatology-app/",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "publisher": { "@type": "Organization", "name": "Brewster Wickersham Publications" }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* =====================================================================
+       Design tokens — taken directly from the RheumCompanion app source
+       (src/index.css design system + component styles)
+    ====================================================================== */
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-card: #131a2e;
+      --bg-card-2: #1a2340;
+      --border: #232c47;
+      --border-light: #2a3554;
+      --text-primary: #e8ecf6;
+      --text-secondary: #aab4d0;
+      --text-muted: #8a94b0;
+      --accent-primary: #4f8ef7;   /* app accent blue */
+      --accent-light: #8fb8ff;
+      --warning: #ff9f43;          /* book accent (from app palette) */
+      --violet: #8b5cf6;           /* SootheQuest accent (from app palette) */
+      --success: #59d99d;          /* privacy/green (from app palette) */
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 22px;
+      --shadow-deep: 0 18px 50px rgba(0, 0, 0, .55);
+      --shadow-glow: 0 8px 30px rgba(79, 142, 247, .35);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.65;
+      font-size: 16.5px;
+      overflow-x: hidden;
+    }
+    /* Ambient glow — echoes the app's shadow-glow aesthetic */
+    .ambient {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(600px 420px at 50% -80px, rgba(79, 142, 247, .16), transparent 70%),
+        radial-gradient(700px 500px at 88% 78%, rgba(139, 92, 246, .07), transparent 70%);
+    }
+    h1, h2, h3 { line-height: 1.15; letter-spacing: -0.02em; }
+    img { max-width: 100%; display: block; }
+    a { color: var(--accent-primary); }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    section { padding: 76px 0; }
+    .eyebrow {
+      display: inline-block; font-size: .76rem; font-weight: 700; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--accent-primary); margin-bottom: 14px;
+    }
+    .section-title { font-size: clamp(1.7rem, 3.5vw, 2.35rem); font-weight: 800; margin-bottom: 12px; color: #fff; }
+    .section-sub { color: var(--text-secondary); max-width: 640px; }
+    .btn {
+      display: inline-block; padding: 14px 26px; border-radius: var(--radius-md); font-weight: 700;
+      text-decoration: none; font-size: .95rem; border: 0; cursor: pointer; font-family: inherit;
+      transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
+    .btn-primary {
+      background: linear-gradient(135deg, #5f9bff, #3d7ae8);
+      color: #fff; box-shadow: var(--shadow-glow);
+    }
+    .btn-outline { border: 1.5px solid var(--border-light); color: var(--text-primary); background: var(--bg-card); }
+    :is(a, button, input):focus-visible { outline: 3px solid var(--accent-primary); outline-offset: 2px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 7px; padding: 7px 15px; border-radius: 999px;
+      font-size: .8rem; font-weight: 600;
+    }
+
+    /* ===== Nav (glass, like the app's layered surfaces) ===== */
+    header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(10, 14, 26, .78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; text-decoration: none; color: #fff; font-size: 1.05rem; letter-spacing: -0.01em; }
+    .brand img { width: 36px; height: 36px; border-radius: 9px; box-shadow: 0 4px 14px rgba(79, 142, 247, .3); }
+    .nav-links { display: flex; gap: 26px; align-items: center; }
+    .nav-links a { text-decoration: none; color: var(--text-secondary); font-weight: 600; font-size: .92rem; }
+    .nav-links a:hover { color: var(--accent-light); }
+    .nav-links .btn { padding: 10px 19px; font-size: .88rem; }
+    .nav-links .btn:hover { color: #fff; }
+    @media (max-width: 780px) { .nav-links a:not(.btn) { display: none; } }
+
+    /* ===== Hero ===== */
+    .hero { padding: 96px 0 80px; text-align: center; position: relative; }
+    .badge {
+      background: rgba(79, 142, 247, .12); color: var(--accent-light);
+      border: 1px solid rgba(79, 142, 247, .35); margin-bottom: 24px;
+    }
+    .hero h1 { font-size: clamp(2.4rem, 6.5vw, 3.9rem); font-weight: 800; margin-bottom: 18px; color: #fff; letter-spacing: -0.03em; }
+    .hero h1 .grad {
+      background: linear-gradient(120deg, var(--accent-light), var(--accent-primary));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero p.lede { max-width: 620px; margin: 0 auto 32px; color: var(--text-secondary); font-size: 1.12rem; }
+    .store-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+    .qr-row { display: flex; gap: 34px; justify-content: center; flex-wrap: wrap; }
+    .qr-row figure {
+      text-align: center; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 16px 20px 12px;
+    }
+    .qr-row img { width: 112px; height: 112px; margin: 0 auto 8px; border-radius: 10px; background: #fff; padding: 6px; }
+    .qr-row figcaption { font-size: .8rem; color: var(--text-muted); font-weight: 600; }
+    .trust-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 38px; }
+    .trust-row .pill { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); }
+    .hero-family-note { margin-top: 30px; font-size: .93rem; color: var(--text-muted); }
+    .hero-family-note a { font-weight: 700; color: var(--accent-light); }
+
+    /* ===== Features (app-style cards: tinted icon tiles, 12px radii) ===== */
+    .features { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: rgba(19, 26, 46, .45); }
+    .grid { display: grid; gap: 18px; margin-top: 40px; }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .feature {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 26px; transition: border-color .15s ease, transform .15s ease;
+    }
+    .feature:hover { border-color: var(--border-light); transform: translateY(-2px); }
+    .feature .icon {
+      width: 46px; height: 46px; display: grid; place-items: center; font-size: 1.35rem;
+      background: rgba(79, 142, 247, .12); border: 1px solid rgba(79, 142, 247, .25);
+      border-radius: var(--radius-md); margin-bottom: 15px;
+    }
+    .feature h3 { font-size: 1.1rem; margin-bottom: 8px; font-weight: 700; color: #fff; }
+    .feature p { color: var(--text-secondary); font-size: .93rem; }
+
+    /* ===== Showcase — phone-frame cards that echo the app's screens ===== */
+    .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 18px; margin-top: 40px; }
+    .shot {
+      background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+      border: 1px solid var(--border-light); border-radius: var(--radius-xl);
+      padding: 16px 16px 20px; box-shadow: var(--shadow-deep);
+    }
+    .shot .notch { width: 54px; height: 5px; border-radius: 999px; background: var(--border-light); margin: 2px auto 14px; }
+    .shot-img {
+      width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--border);
+      background: var(--bg-primary);
+    }
+    .shot h3 { font-size: .98rem; margin: 14px 0 5px; color: #fff; font-weight: 700; }
+    .shot p { font-size: .83rem; color: var(--text-muted); }
+
+    /* =====================================================================
+         CO-MARKETING SECTION 1 of 4: "The Resilient Path Family"
+         Signature: a glowing path connects Learn -> Track -> Restore,
+         drawn in the three product accents from the app's own palette.
+    ====================================================================== */
+    .path-strip { position: relative; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 46px 0 36px; text-align: center; }
+    .path-strip::before {
+      content: ""; position: absolute; left: 12%; right: 12%; top: 13px; height: 3px; border-radius: 999px;
+      background: linear-gradient(90deg, var(--warning), var(--accent-primary), var(--violet));
+      opacity: .85; box-shadow: 0 0 18px rgba(79, 142, 247, .45);
+    }
+    .path-step { position: relative; padding-top: 34px; font-weight: 800; font-size: 1.08rem; }
+    .path-step::before {
+      content: ""; position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+      width: 17px; height: 17px; border-radius: 999px; background: var(--bg-primary); border: 4px solid currentColor;
+    }
+    .path-step small { display: block; font-weight: 600; font-size: .76rem; color: var(--text-muted); letter-spacing: .08em; text-transform: uppercase; margin-top: 3px; }
+    .path-step.learn { color: var(--warning); }
+    .path-step.track { color: var(--accent-primary); }
+    .path-step.restore { color: var(--violet); }
+    @media (max-width: 620px) {
+      .path-strip { grid-template-columns: 1fr; gap: 22px; }
+      .path-strip::before { left: 50%; right: auto; width: 3px; top: 8px; bottom: 8px; height: auto; transform: translateX(-50%);
+        background: linear-gradient(180deg, var(--warning), var(--accent-primary), var(--violet)); }
+    }
+
+    .family-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px; }
+    .family-card {
+      position: relative; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 30px 26px 28px; display: flex; flex-direction: column;
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .family-card:hover { transform: translateY(-3px); }
+    .family-card::before {
+      content: ""; position: absolute; inset: -1px -1px auto -1px; height: 4px;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .family-card.book::before { background: var(--warning); }
+    .family-card.rheum::before { background: var(--accent-primary); }
+    .family-card.game::before { background: var(--violet); }
+    .family-card.book:hover { box-shadow: 0 10px 34px rgba(255, 159, 67, .18); border-color: rgba(255, 159, 67, .4); }
+    .family-card.rheum:hover { box-shadow: var(--shadow-glow); border-color: rgba(79, 142, 247, .45); }
+    .family-card.game:hover { box-shadow: 0 10px 34px rgba(139, 92, 246, .22); border-color: rgba(139, 92, 246, .45); }
+    .family-card .kicker { font-size: .74rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; margin-bottom: 10px; }
+    .family-card.book .kicker { color: var(--warning); }
+    .family-card.rheum .kicker { color: var(--accent-primary); }
+    .family-card.game .kicker { color: var(--violet); }
+    .family-card h3 { font-size: 1.35rem; margin-bottom: 10px; font-weight: 800; color: #fff; }
+    .family-card p { color: var(--text-secondary); font-size: .94rem; margin-bottom: 16px; }
+    .family-card ul { list-style: none; margin: 0 0 24px; flex: 1; }
+    .family-card li { font-size: .91rem; color: var(--text-secondary); padding-left: 24px; position: relative; margin-bottom: 9px; }
+    .family-card li::before { content: "✓"; position: absolute; left: 0; font-weight: 800; }
+    .family-card.book li::before { color: var(--warning); }
+    .family-card.rheum li::before { color: var(--accent-primary); }
+    .family-card.game li::before { color: var(--violet); }
+    .family-card .btn { text-align: center; }
+    .family-card.book .btn { background: linear-gradient(135deg, #ffb45f, #f28c1e); color: #241300; }
+    .family-card.game .btn { background: linear-gradient(135deg, #a385ff, #7c4ef0); color: #fff; }
+    .you-are-here { background: rgba(79, 142, 247, .12); color: var(--accent-light); border: 1px solid rgba(79, 142, 247, .35); margin-bottom: 12px; align-self: flex-start; }
+
+    /* ===== CO-MARKETING SECTION 2 of 4: SootheQuest flare-day callout ===== */
+    .callout {
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      background:
+        radial-gradient(500px 260px at 12% 50%, rgba(139, 92, 246, .14), transparent 70%),
+        rgba(19, 26, 46, .5);
+      padding: 54px 0;
+    }
+    .callout-inner { display: flex; align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap; }
+    .callout h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; color: #fff; }
+    .callout p { color: var(--text-secondary); max-width: 560px; }
+    .callout .btn { background: linear-gradient(135deg, #a385ff, #7c4ef0); color: #fff; white-space: nowrap; box-shadow: 0 8px 30px rgba(139, 92, 246, .3); }
+
+    /* ===== CO-MARKETING SECTION 3 of 4: email capture ===== */
+    .signup { text-align: center; }
+    .signup form { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 28px; }
+    .signup input[type="email"] {
+      padding: 14px 16px; border-radius: var(--radius-md); border: 1.5px solid var(--border-light);
+      font: inherit; min-width: 280px; background: var(--bg-card); color: var(--text-primary);
+    }
+    .signup input[type="email"]::placeholder { color: var(--text-muted); }
+    .signup .fine { font-size: .8rem; color: var(--text-muted); margin-top: 15px; }
+
+    /* ===== Privacy & disclaimer ===== */
+    .privacy { border-top: 1px solid var(--border); background: rgba(19, 26, 46, .45); text-align: center; }
+    .privacy .lock {
+      width: 54px; height: 54px; display: grid; place-items: center; margin: 0 auto 16px; font-size: 1.5rem;
+      background: rgba(89, 217, 157, .1); border: 1px solid rgba(89, 217, 157, .3); border-radius: 999px;
+    }
+    .privacy p { max-width: 640px; margin: 0 auto; color: var(--text-secondary); }
+    .disclaimer {
+      background: rgba(255, 159, 67, .07); border: 1px solid rgba(255, 159, 67, .3); border-radius: var(--radius-lg);
+      padding: 24px 28px; margin: 48px auto 0; max-width: 760px; font-size: .9rem; color: #e0b98a; text-align: left;
+    }
+    .disclaimer strong { display: block; margin-bottom: 6px; color: var(--warning); }
+
+    /* ===== Footer (CO-MARKETING SECTION 4 of 4: family column) ===== */
+    footer { background: #070b14; color: var(--text-muted); padding: 56px 0 34px; font-size: .9rem; border-top: 1px solid var(--border); }
+    .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 34px; margin-bottom: 40px; }
+    @media (max-width: 760px) { .foot-grid { grid-template-columns: 1fr 1fr; } }
+    footer h4 { color: #fff; font-size: .82rem; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 14px; }
+    footer a { color: var(--text-muted); text-decoration: none; display: block; margin-bottom: 9px; }
+    footer a:hover { color: var(--accent-light); }
+    .foot-brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 800; margin-bottom: 12px; }
+    .foot-brand img { width: 30px; height: 30px; border-radius: 7px; }
+    .foot-bottom { border-top: 1px solid var(--border); padding-top: 24px; font-size: .82rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="#">
+        <img src="app_icon.png" alt="RheumCompanion logo">
+        RheumCompanion
+      </a>
+      <nav class="nav-links" aria-label="Main">
+        <a href="#features">Features</a>
+        <a href="#showcase">Screenshots</a>
+        <a href="#family">More From Us</a>
+        <a href="#privacy">Privacy</a>
+        <a class="btn btn-primary" href="#download">Download</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== Hero (existing content preserved; ecosystem line + trust pills added) ===== -->
+  <section class="hero" id="download">
+    <div class="wrap">
+      <span class="pill badge">Evidence-Based Wellness App</span>
+      <h1>Your Rheumatology<br><span class="grad">Companion</span></h1>
+      <p class="lede">Access evidence-based disease education, track symptoms &amp; flares, search clinical trials, and run AI-powered Q&amp;A checks—built with board-certified rheumatologist input.</p>
+      <div class="store-row">
+        <a class="btn btn-primary" href="https://apps.apple.com/us/app/rheumcompanion/id6784212388">Download on the App&nbsp;Store</a>
+        <a class="btn btn-outline" href="#" aria-disabled="true">Get it on Google&nbsp;Play</a>
+      </div>
+      <div class="qr-row">
+        <figure>
+          <img src="app_store_qr.png" alt="App Store QR code">
+          <figcaption>iOS QR Code</figcaption>
+        </figure>
+        <figure>
+          <img src="google_play_qr_placeholder.png" alt="Google Play QR code placeholder">
+          <figcaption>Android (Pending)</figcaption>
+        </figure>
+      </div>
+      <div class="trust-row">
+        <span class="pill">🩺 Rheumatologist-informed</span>
+        <span class="pill">🔒 Data stays on your device</span>
+        <span class="pill">📚 13 conditions covered</span>
+      </div>
+      <!-- CO-MARKETING: hero ecosystem line -->
+      <p class="hero-family-note">Part of the <a href="#family">Resilient Path family</a> — a book, a tracker, and a game, built for patients.</p>
+    </div>
+  </section>
+
+  <!-- ===== Features (existing content preserved verbatim) ===== -->
+  <section class="features" id="features">
+    <div class="wrap">
+      <span class="eyebrow">Features</span>
+      <h2 class="section-title">Everything You Need</h2>
+      <p class="section-sub">A comprehensive suite of tools built specifically for rheumatology patients.</p>
+      <div class="grid grid-3">
+        <div class="feature"><div class="icon">🤖</div><h3>RheumBot AI Chat</h3><p>Ask queries about symptoms, treatments, or research in plain language. Guided by a medical system prompt for educational answers.</p></div>
+        <div class="feature"><div class="icon">⚡</div><h3>Interaction Checker</h3><p>Enter your medications and get AI-analyzed interaction reports detailing severity levels and scientific mechanisms.</p></div>
+        <div class="feature"><div class="icon">📊</div><h3>Symptom &amp; Flare Tracker</h3><p>Log stiffness, pain, and fatigue. Spot triggers, export structured medical PDF reports, and see clinic visit tips.</p></div>
+        <div class="feature"><div class="icon">📚</div><h3>Disease Encyclopedia</h3><p>Explore detail pages for 13 diagnoses including Rheumatoid Arthritis, Lupus, Ankylosing Spondylitis, and Gout.</p></div>
+        <div class="feature"><div class="icon">💊</div><h3>Medication Reference</h3><p>Browse classes covering DMARDs, biologics, JAK inhibitors, and NSAIDs. View official FDA package insert info.</p></div>
+        <div class="feature"><div class="icon">🔬</div><h3>Clinical Trial Finder</h3><p>Search active clinical trials directly from ClinicalTrials.gov for any of the 13 supported rheumatology diagnoses.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Showcase (existing content preserved; phone-frame styling echoes the app UI) ===== -->
+  <section id="showcase">
+    <div class="wrap">
+      <span class="eyebrow">Screenshots</span>
+      <h2 class="section-title">See the App in Action</h2>
+      <p class="section-sub">Take a tour through RheumCompanion's clean and intuitive interface.</p>
+      <div class="shots">
+        <div class="shot">
+          <div class="notch"></div>
+          <img class="shot-img" src="screens/home.png" alt="RheumCompanion home dashboard screen" loading="lazy" width="640" height="1387">
+          <h3>Home Dashboard</h3><p>Your daily check-in hub showing quick access, symptoms log, and tracking insights.</p>
+        </div>
+        <div class="shot">
+          <div class="notch"></div>
+          <img class="shot-img" src="screens/chatbot.png" alt="RheumBot AI chat screen" loading="lazy" width="640" height="1387">
+          <h3>RheumBot Chat</h3><p>Talk to our AI health reference for instant answers backed by package inserts.</p>
+        </div>
+        <div class="shot">
+          <div class="notch"></div>
+          <img class="shot-img" src="screens/tracker.png" alt="Symptom and flare tracker screen" loading="lazy" width="640" height="1387">
+          <h3>Flare Tracker</h3><p>Record pain levels, joint stiffness, rash, swelling, and track triggers over time.</p>
+        </div>
+        <div class="shot">
+          <div class="notch"></div>
+          <img class="shot-img" src="screens/interactions.png" alt="Drug interaction checker screen" loading="lazy" width="640" height="1387">
+          <h3>Interaction Checker</h3><p>Cross-reference DMARDs, biologics, and other drugs for potential health alerts.</p>
+        </div>
+        <div class="shot">
+          <div class="notch"></div>
+          <img class="shot-img" src="screens/diseases.png" alt="Disease encyclopedia condition guide screen" loading="lazy" width="640" height="1387">
+          <h3>Condition Guides</h3><p>Comprehensive reference summaries covering 13 main rheumatology conditions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       CO-MARKETING SECTION 1 of 4: The Resilient Path Family
+       TODO: Replace the placeholder hrefs marked REPLACE-ME with your real
+       product URLs (keep the utm parameters for tracking).
+  ====================================================================== -->
+  <section class="family" id="family">
+    <div class="wrap">
+      <span class="eyebrow">More From Us</span>
+      <h2 class="section-title">One Path. Three Tools.</h2>
+      <p class="section-sub">RheumCompanion is part of a family of patient tools designed to work together — learn the skills, track your condition, and restore your energy.</p>
+
+      <div class="path-strip" aria-hidden="true">
+        <div class="path-step learn">Learn<small>The Resilient Path</small></div>
+        <div class="path-step track">Track<small>RheumCompanion</small></div>
+        <div class="path-step restore">Restore<small>SootheQuest</small></div>
+      </div>
+
+      <div class="family-cards">
+        <article class="family-card book">
+          <span class="kicker">Book + Companion App</span>
+          <h3>The Resilient Path</h3>
+          <p>A practical guide to living well with chronic pain — evidence-informed strategies you can actually use, with a companion app to put them into practice.</p>
+          <ul>
+            <li>Pacing, flare planning, and coping frameworks</li>
+            <li>Written for patients, not clinicians</li>
+            <li>Companion app turns each chapter into daily practice</li>
+          </ul>
+          <!-- REPLACE-ME: link to the book's Amazon page or product page -->
+          <a class="btn" href="#?utm_source=rheumcompanion_site&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=family_card">Get the Book &amp; App</a>
+        </article>
+
+        <article class="family-card rheum">
+          <span class="pill you-are-here">You're here</span>
+          <h3>RheumCompanion</h3>
+          <p>The daily self-management app for rheumatology patients — flare tracking, medication reference, and appointment prep in one place.</p>
+          <ul>
+            <li>Track symptoms and spot your triggers</li>
+            <li>Check drug interactions in seconds</li>
+            <li>Walk into appointments with the full picture</li>
+          </ul>
+          <a class="btn btn-primary" href="https://apps.apple.com/us/app/rheumcompanion/id6784212388">Download Free</a>
+        </article>
+
+        <article class="family-card game">
+          <span class="kicker">A Game for Any Chronic Illness</span>
+          <h3>SootheQuest</h3>
+          <p>A gentle game that turns coping skills into play — made for low-energy days, flare days, and everything in between.</p>
+          <ul>
+            <li>Calming, low-effort gameplay for hard days</li>
+            <li>Real coping techniques, disguised as quests</li>
+            <li>For every chronic illness, not just one</li>
+          </ul>
+          <!-- REPLACE-ME: link to SootheQuest's App Store / Google Play page -->
+          <a class="btn" href="#?utm_source=rheumcompanion_site&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=family_card">Play SootheQuest</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CO-MARKETING SECTION 2 of 4: contextual flare-day callout ===== -->
+  <section class="callout">
+    <div class="wrap callout-inner">
+      <div>
+        <h2>Rough flare day?</h2>
+        <p>When tracking is all you can manage, SootheQuest offers something softer — a few gentle minutes of play built around real coping skills.</p>
+      </div>
+      <!-- REPLACE-ME: link to SootheQuest's store page -->
+      <a class="btn" href="#?utm_source=rheumcompanion_site&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=flare_callout">Try SootheQuest</a>
+    </div>
+  </section>
+
+  <!-- ===== CO-MARKETING SECTION 3 of 4: email capture =====
+       TODO: Sign up for a free form service (Formspree, Buttondown, or
+       MailerLite all work on GitHub Pages) and paste your form endpoint
+       into the action attribute below. Until then the button mails you.
+  -->
+  <section class="signup" id="signup">
+    <div class="wrap">
+      <span class="eyebrow">Free Download</span>
+      <h2 class="section-title">Get the Appointment Prep Worksheet</h2>
+      <p class="section-sub" style="margin: 0 auto;">A free one-page worksheet to organize your symptoms, questions, and medication changes before your next rheumatology visit — plus occasional updates from the Resilient Path family.</p>
+      <form action="mailto:brewsterwickershampublications@gmail.com" method="get">
+        <input type="email" name="email" placeholder="you@example.com" aria-label="Email address" required>
+        <button class="btn btn-primary" type="submit">Send Me the Worksheet</button>
+      </form>
+      <p class="fine">No spam. Unsubscribe anytime. Your email is never sold or shared.</p>
+    </div>
+  </section>
+
+  <!-- ===== Privacy + disclaimer (existing content preserved verbatim) ===== -->
+  <section class="privacy" id="privacy">
+    <div class="wrap">
+      <div class="lock">🔒</div>
+      <h2 class="section-title">Your Health Data. Stored Locally.</h2>
+      <p>We believe in complete data ownership. RheumCompanion requires no cloud accounts or server sign-ins. All of your symptom logs, notes, and medication checks stay safely encrypted inside your device's local storage.</p>
+      <div class="disclaimer" id="disclaimer">
+        <strong>⚠ Important Medical Disclaimer</strong>
+        RheumCompanion is an educational and wellness tracking reference tool. It is NOT a medical device, does not diagnose, treat, or offer clinical advice. Always consult your rheumatologist or a qualified physician regarding any medical conditions, treatment plans, or medication changes.
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div>
+          <div class="foot-brand"><img src="app_icon.png" alt="">RheumCompanion</div>
+          <p>Evidence-based rheumatology wellness tracking, Q&amp;A support, and reference directories.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#showcase">Screenshots</a>
+          <a href="#disclaimer">Disclaimer</a>
+        </div>
+        <!-- CO-MARKETING SECTION 4 of 4: family footer column -->
+        <div>
+          <h4>The Family</h4>
+          <!-- REPLACE-ME: real URLs for the book and SootheQuest -->
+          <a href="#?utm_source=rheumcompanion_site&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=footer">The Resilient Path (Book)</a>
+          <a href="#?utm_source=rheumcompanion_site&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=footer">The Resilient Path App</a>
+          <a href="#?utm_source=rheumcompanion_site&amp;utm_medium=referral&amp;utm_campaign=ecosystem&amp;utm_content=footer">SootheQuest</a>
+        </div>
+        <div>
+          <h4>Developer</h4>
+          <a href="https://github.com/pennwickersham/rheumatology-app">GitHub Project</a>
+          <a href="mailto:brewsterwickershampublications@gmail.com">Contact Support</a>
+          <a href="https://pennwickersham.github.io/rheumatology-app/privacy.html">Privacy Policy</a>
+        </div>
+      </div>
+      <div class="foot-bottom">© 2026 RheumCompanion. Designed with board-certified rheumatologist input. All rights reserved.</div>
+    </div>
+  </footer>
+
+</body>
+</html>
