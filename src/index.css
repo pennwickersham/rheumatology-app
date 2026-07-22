@@ -931,7 +931,7 @@ img {
   position: relative;
   width: 100%;
   max-width: var(--max-width);
-  height: var(--nav-height);
+  height: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -1468,7 +1468,7 @@ img {
 
 .chat-input-area {
   padding: var(--space-md);
-  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom));
+  padding-bottom: var(--space-md);
   border-top: 1px solid var(--border);
   background: rgba(5, 7, 10, 0.95);
   backdrop-filter: blur(20px);

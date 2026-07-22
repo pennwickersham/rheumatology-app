@@ -71,12 +71,12 @@ export default function Layout({ children }) {
 
       {/* Bottom Navigation */}
       <nav className="bottom-nav glass" style={{ 
-        height: 'var(--nav-height)', 
+        height: 'calc(var(--nav-height) + env(safe-area-inset-bottom, 0px))',
         borderTop: '1px solid var(--border)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         background: 'rgba(5, 7, 10, 0.85)',
-        padding: '0 var(--space-sm)',
+        padding: '0 var(--space-sm) env(safe-area-inset-bottom, 0px)',
         flexShrink: 0
       }}>
         {navItems.map(item => {
