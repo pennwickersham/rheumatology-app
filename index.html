@@ -66,6 +66,8 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+    /* Sticky header is 68px; keep anchor jumps from landing under it. */
+    [id] { scroll-margin-top: 84px; }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
       *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -147,8 +149,12 @@
       text-align: center; background: var(--bg-card); border: 1px solid var(--border);
       border-radius: var(--radius-lg); padding: 16px 20px 12px;
     }
-    .qr-row img { width: 112px; height: 112px; margin: 0 auto 8px; border-radius: 10px; background: #fff; padding: 6px; }
+    .qr-row a { display: block; text-decoration: none; }
+    .qr-row img { width: 112px; height: 112px; margin: 0 auto 8px; border-radius: 10px; background: #fff; padding: 6px; display: block; }
     .qr-row figcaption { font-size: .8rem; color: var(--text-muted); font-weight: 600; }
+    .qr-row figure { transition: border-color .18s ease, transform .18s ease; }
+    .qr-row figure:hover { border-color: var(--border-light); transform: translateY(-2px); }
+    .qr-hint { margin-top: 14px; font-size: .82rem; color: var(--text-muted); }
     .trust-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 38px; }
     .trust-row .pill { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); }
     .hero-family-note { margin-top: 30px; font-size: .93rem; color: var(--text-muted); }
@@ -321,18 +327,25 @@
       <p class="lede">Access evidence-based disease education, track symptoms &amp; flares, search clinical trials, and run AI-powered Q&amp;A checks—built with board-certified rheumatologist input.</p>
       <div class="store-row">
         <a class="btn btn-primary" href="https://apps.apple.com/us/app/rheumcompanion/id6784212388">Download on the App&nbsp;Store</a>
-        <a class="btn btn-outline" href="#" aria-disabled="true">Get it on Google&nbsp;Play</a>
+        <a class="btn btn-outline" href="https://play.google.com/store/apps/details?id=com.rheumcompanion.app">Get it on Google&nbsp;Play</a>
       </div>
       <div class="qr-row">
         <figure>
-          <img src="app_store_qr.png" alt="App Store QR code">
-          <figcaption>iOS QR Code</figcaption>
+          <a href="https://apps.apple.com/us/app/rheumcompanion/id6784212388">
+            <img src="app_store_qr.png" width="592" height="592"
+                 alt="QR code linking to RheumCompanion on the Apple App Store">
+            <figcaption>iOS &middot; App&nbsp;Store</figcaption>
+          </a>
         </figure>
         <figure>
-          <img src="google_play_qr_placeholder.png" alt="Google Play QR code placeholder">
-          <figcaption>Android (Pending)</figcaption>
+          <a href="https://play.google.com/store/apps/details?id=com.rheumcompanion.app">
+            <img src="google_play_qr.png" width="656" height="656"
+                 alt="QR code linking to RheumCompanion on Google Play">
+            <figcaption>Android &middot; Google&nbsp;Play</figcaption>
+          </a>
         </figure>
       </div>
+      <p class="qr-hint">Point your phone camera at a code — or tap it — to open the listing.</p>
       <div class="trust-row">
         <span class="pill">🩺 Rheumatologist-informed</span>
         <span class="pill">🔒 Data stays on your device</span>
@@ -436,7 +449,7 @@
             <li>Check drug interactions in seconds</li>
             <li>Walk into appointments with the full picture</li>
           </ul>
-          <a class="btn btn-primary" href="https://apps.apple.com/us/app/rheumcompanion/id6784212388">Download Free</a>
+          <a class="btn btn-primary" href="#download">Download Free</a>
         </article>
 
         <article class="family-card game">
