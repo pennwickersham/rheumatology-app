@@ -2,10 +2,15 @@ import { useState, useMemo } from 'react';
 import { diseases } from '../data/diseases';
 import { medications, getMedicationById } from '../data/medications';
 import { Icon } from '../components/Icons';
+import { loadFromStorage } from '../utils/storage';
 
 export default function SymptomLookup() {
   const [selectedDiseases, setSelectedDiseases] = useState([]);
-  const [selectedMeds, setSelectedMeds] = useState([]);
+  // Pre-select any medications the user saved in the Medications section
+  const [selectedMeds, setSelectedMeds] = useState(() => {
+    const saved = loadFromStorage('my_medications', []);
+    return saved.filter(id => medications.some(m => m.id === id));
+  });
   const [symptomQuery, setSymptomQuery] = useState('');
 
   const toggleDisease = (id) => {
@@ -91,19 +96,23 @@ export default function SymptomLookup() {
         </p>
       </div>
 
-      <div className="disclaimer stagger-item" style={{ marginBottom: 'var(--space-xl)' }}>
-        <div className="disclaimer__icon">
-          <Icon name="info" size={20} color="var(--warning)" />
+      {/* How-to instructions */}
+      <div className="card glass-morphism stagger-item" style={{ display: 'block', padding: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
+        <div style={{ fontWeight: 800, fontSize: 'var(--font-sm)', marginBottom: 'var(--space-sm)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Icon name="info" size={16} color="var(--accent-primary)" /> How this works
         </div>
-        <div>
-          Select your conditions and medications, then search for a symptom to see how it correlates with your medical profile.
-        </div>
+        <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+          Wondering whether a symptom is your <b style={{ color: 'var(--text-primary)' }}>disease flaring</b> or a <b style={{ color: 'var(--text-primary)' }}>medication side effect</b>? Complete the three steps below:
+          tap your condition(s), tap your medication(s), then type the symptom. The checker cross-references it against known disease symptoms and FDA drug labels.
+        </p>
       </div>
 
       {/* Disease Selection */}
       <div className="section-header stagger-item" style={{ marginBottom: 'var(--space-md)' }}>
-        <h2 className="section-header__title" style={{ fontSize: 'var(--font-base)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-          1. Your Conditions
+        <h2 className="section-header__title" style={{ fontSize: 'var(--font-base)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: selectedDiseases.length > 0 ? 'var(--success)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {selectedDiseases.length > 0 ? <Icon name="check-circle" size={16} color="var(--success)" /> : <span>1.</span>}
+          Tap Your Condition(s)
+          {selectedDiseases.length > 0 && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>· {selectedDiseases.length} selected</span>}
         </h2>
       </div>
       <div className="multi-select stagger-item">
@@ -121,9 +130,14 @@ export default function SymptomLookup() {
 
       {/* Medication Selection */}
       <div className="section-header stagger-item" style={{ marginBottom: 'var(--space-md)' }}>
-        <h2 className="section-header__title" style={{ fontSize: 'var(--font-base)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-          2. Your Medications
+        <h2 className="section-header__title" style={{ fontSize: 'var(--font-base)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: selectedMeds.length > 0 ? 'var(--success)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {selectedMeds.length > 0 ? <Icon name="check-circle" size={16} color="var(--success)" /> : <span>2.</span>}
+          Tap Your Medication(s)
+          {selectedMeds.length > 0 && <span style={{ fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>· {selectedMeds.length} selected</span>}
         </h2>
+        <p className="section-header__subtitle" style={{ fontSize: 'var(--font-xs)' }}>
+          Medications saved under "My Medications" are pre-selected for you.
+        </p>
       </div>
       <div className="multi-select stagger-item">
         {relevantMeds.map(m => (
@@ -139,34 +153,49 @@ export default function SymptomLookup() {
       </div>
 
       {/* Symptom Search */}
-      <div className="section-header stagger-item" style={{ marginBottom: 'var(--space-md)' }}>
-        <h2 className="section-header__title" style={{ fontSize: 'var(--font-base)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
-          3. Describe Symptom
-        </h2>
-      </div>
-      <div className="search-bar stagger-item" style={{ marginBottom: 'var(--space-2xl)' }}>
-        <span className="search-bar__icon">
-          <Icon name="search" size={18} />
-        </span>
-        <input
-          className="search-bar__input"
-          type="text"
-          placeholder="e.g. nausea, joint pain, rash..."
-          value={symptomQuery}
-          onChange={e => setSymptomQuery(e.target.value)}
-          disabled={selectedDiseases.length === 0 && selectedMeds.length === 0}
-        />
-      </div>
-
-      {/* Instructions */}
-      {(selectedDiseases.length === 0 && selectedMeds.length === 0) && (
-        <div className="empty-state stagger-item">
-          <div className="empty-state__icon">
-            <Icon name="activity" size={48} />
-          </div>
-          <div className="empty-state__text">Select at least one condition or medication above to begin the analysis.</div>
-        </div>
-      )}
+      {(() => {
+        const ready = selectedDiseases.length > 0 || selectedMeds.length > 0;
+        const done = ready && symptomQuery.trim().length > 0;
+        return (
+          <>
+            <div className="section-header stagger-item" style={{ marginBottom: 'var(--space-md)' }}>
+              <h2 className="section-header__title" style={{ fontSize: 'var(--font-base)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: done ? 'var(--success)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {done ? <Icon name="check-circle" size={16} color="var(--success)" /> : <span>3.</span>}
+                Type the Symptom
+              </h2>
+            </div>
+            <div className="search-bar stagger-item" style={{ marginBottom: ready ? 'var(--space-2xl)' : 'var(--space-md)', opacity: ready ? 1 : 0.5 }}>
+              <span className="search-bar__icon">
+                <Icon name="search" size={18} />
+              </span>
+              <input
+                className="search-bar__input"
+                type="text"
+                placeholder={ready ? 'e.g. nausea, joint pain, rash...' : 'Complete steps 1 or 2 first...'}
+                value={symptomQuery}
+                onChange={e => setSymptomQuery(e.target.value)}
+                disabled={!ready}
+              />
+            </div>
+            {!ready && (
+              <div className="empty-state stagger-item">
+                <div className="empty-state__icon">
+                  <Icon name="activity" size={48} />
+                </div>
+                <div className="empty-state__text">
+                  First, tap at least one condition (step 1) or medication (step 2) above.<br />
+                  Then you can type a symptom here to analyze it.
+                </div>
+              </div>
+            )}
+            {ready && !symptomQuery.trim() && (
+              <p className="stagger-item" style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
+                Results appear instantly as you type.
+              </p>
+            )}
+          </>
+        );
+      })()}
 
       {/* Results */}
       {results && symptomQuery.trim() && (

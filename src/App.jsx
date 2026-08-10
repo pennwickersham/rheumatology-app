@@ -129,20 +129,10 @@ export default function App() {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const { user } = useAuth();
 
-  // Re-trigger disclaimer every time the app comes to foreground
-  useEffect(() => {
-    const handleAppStateChange = ({ isActive }) => {
-      if (isActive) {
-        setDisclaimerAccepted(false);
-      }
-    };
-    
-    const stateListener = CapacitorApp.addListener('appStateChange', handleAppStateChange);
-    
-    return () => {
-      stateListener.then(listener => listener.remove());
-    };
-  }, []);
+  // Disclaimer shows once per app launch (cold start). It is intentionally NOT
+  // re-triggered on appStateChange — resuming from the background (app switch,
+  // system dialogs, share sheets, etc.) previously reset it, which made the
+  // modal reappear constantly while navigating the app.
 
   const handleDecline = () => {
     CapacitorApp.exitApp();

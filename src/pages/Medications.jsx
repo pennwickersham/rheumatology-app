@@ -4,6 +4,7 @@ import { medications, drugClasses, getMedicationById, getMedicationsByClass, sea
 import { getDrugDetails } from '../api/fda';
 import { formatSectionTitle, getSectionPriority } from '../utils/formatFda';
 import { Icon } from '../components/Icons';
+import { saveToStorage, loadFromStorage } from '../utils/storage';
 
 // openFDA effective_time is YYYYMMDD — format for citation display
 function formatLabelDate(raw) {
@@ -23,6 +24,32 @@ export default function Medications() {
   const [fdaData, setFdaData] = useState(null);
   const [loadingFda, setLoadingFda] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
+
+  // "My Medications" — the user's personal medication list (stored locally)
+  const [myMeds, setMyMeds] = useState(() => loadFromStorage('my_medications', []));
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerSearch, setPickerSearch] = useState('');
+  const [pickerDraft, setPickerDraft] = useState([]);
+
+  const openPicker = () => {
+    setPickerDraft(myMeds);
+    setPickerSearch('');
+    setShowPicker(true);
+  };
+
+  const togglePick = (medId) => {
+    setPickerDraft(prev =>
+      prev.includes(medId) ? prev.filter(m => m !== medId) : [...prev, medId]
+    );
+  };
+
+  const savePicker = () => {
+    setMyMeds(pickerDraft);
+    saveToStorage('my_medications', pickerDraft);
+    setShowPicker(false);
+  };
+
+  const pickerList = pickerSearch ? searchMedications(pickerSearch) : medications;
 
   useEffect(() => {
     if (id) {
@@ -328,6 +355,145 @@ export default function Medications() {
       <div className="section-header">
         <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)' }}>Medications</h1>
         <p className="section-header__subtitle">FDA prescribing information and safety data</p>
+      </div>
+
+      {/* How-to instructions */}
+      <div className="disclaimer stagger-item" style={{ marginBottom: 'var(--space-lg)' }}>
+        <div className="disclaimer__icon">
+          <Icon name="info" size={20} color="var(--accent-primary)" />
+        </div>
+        <div>
+          <b>How to use this section:</b> Tap <b>Add Medication(s)</b> below to see the full list of medications and select the ones you take. They'll be saved here for quick access. You can also search or browse the full library further down.
+        </div>
+      </div>
+
+      {/* My Medications */}
+      <div className="section-header stagger-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
+        <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)' }}>My Medications</h2>
+        <button className="btn btn--primary btn--sm" style={{ borderRadius: 'var(--radius-md)' }} onClick={openPicker}>
+          <Icon name="pill" size={16} /> Add Medication(s)
+        </button>
+      </div>
+
+      {myMeds.length === 0 ? (
+        <div className="card glass-morphism stagger-item" style={{ display: 'block', padding: 'var(--space-xl)', textAlign: 'center', marginBottom: 'var(--space-2xl)' }}>
+          <div className="flex-center" style={{ width: '56px', height: '56px', margin: '0 auto var(--space-md)', borderRadius: 'var(--radius-xl)', background: 'rgba(14,165,233,0.1)', color: 'var(--accent-primary)' }}>
+            <Icon name="pill" size={28} />
+          </div>
+          <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 'var(--space-lg)' }}>
+            You haven't added any medications yet.<br />
+            Tap the button below to select yours from the full list.
+          </p>
+          <button className="btn btn--primary btn--full" style={{ height: '52px', borderRadius: 'var(--radius-lg)' }} onClick={openPicker}>
+            Add Medication(s)
+          </button>
+        </div>
+      ) : (
+        <div className="grid-1 stagger-item" style={{ marginBottom: 'var(--space-2xl)' }}>
+          {myMeds.map(medId => {
+            const med = getMedicationById(medId);
+            if (!med) return null;
+            const cls = getDrugClassById(med.drugClass);
+            return (
+              <div
+                key={med.id}
+                className="card card--compact"
+                onClick={() => navigate(`/medications/${med.id}`)}
+                style={{ padding: 'var(--space-lg)' }}
+              >
+                <div className="flex-center" style={{
+                  width: '48px', height: '48px', borderRadius: 'var(--radius-lg)',
+                  background: 'rgba(14, 165, 233, 0.1)', color: 'var(--accent-primary)', flexShrink: 0
+                }}>
+                  <Icon name={med.icon} size={28} />
+                </div>
+                <div className="card__content">
+                  <div className="card__title" style={{ fontSize: 'var(--font-lg)' }}>{med.genericName}</div>
+                  <div className="card__subtitle" style={{ fontSize: 'var(--font-xs)', marginTop: '4px' }}>
+                    {med.brandNames.join(', ')} • <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>{cls?.name}</span>
+                  </div>
+                </div>
+                <Icon name="chevron-right" size={20} className="card__arrow" />
+              </div>
+            );
+          })}
+          <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', textAlign: 'center', marginTop: 'var(--space-xs)' }}>
+            Tap a medication for its full FDA safety profile · Tap "Add Medication(s)" to edit your list
+          </p>
+        </div>
+      )}
+
+      {/* Medication picker modal */}
+      {showPicker && (
+        <div className="modal-overlay" onClick={() => setShowPicker(false)}>
+          <div className="modal-panel" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-lg)' }}>
+            <div className="flex-between" style={{ marginBottom: 'var(--space-md)' }}>
+              <h2 style={{ fontSize: 'var(--font-lg)', fontWeight: 800 }}>Select Your Medications</h2>
+              <button className="btn btn--sm" onClick={() => setShowPicker(false)} style={{ color: 'var(--text-muted)' }}>Cancel</button>
+            </div>
+            <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-secondary)', marginBottom: 'var(--space-md)', lineHeight: 1.5 }}>
+              Tap each medication you take, then tap <b>Done</b>. Use search if you don't see yours right away.
+            </p>
+            <div className="search-bar" style={{ marginBottom: 'var(--space-md)' }}>
+              <span className="search-bar__icon"><Icon name="search" size={18} /></span>
+              <input
+                className="search-bar__input"
+                type="text"
+                placeholder="Search by generic or brand name..."
+                value={pickerSearch}
+                onChange={e => setPickerSearch(e.target.value)}
+              />
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, marginBottom: 'var(--space-md)' }}>
+              {pickerList.map(med => {
+                const selected = pickerDraft.includes(med.id);
+                const cls = getDrugClassById(med.drugClass);
+                return (
+                  <button
+                    key={med.id}
+                    onClick={() => togglePick(med.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 'var(--space-md)', width: '100%',
+                      textAlign: 'left', padding: 'var(--space-md)', marginBottom: '8px',
+                      borderRadius: 'var(--radius-lg)', cursor: 'pointer',
+                      background: selected ? 'rgba(14,165,233,0.12)' : 'var(--bg-glass)',
+                      border: selected ? '1px solid var(--accent-primary)' : '1px solid var(--border)',
+                      color: 'var(--text-primary)'
+                    }}
+                  >
+                    <div className="flex-center" style={{
+                      width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0,
+                      background: selected ? 'var(--accent-primary)' : 'rgba(255,255,255,0.06)',
+                      border: selected ? 'none' : '1px solid var(--border)'
+                    }}>
+                      {selected && <Icon name="check" size={14} color="#fff" />}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 'var(--font-sm)' }}>{med.genericName}</div>
+                      <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {med.brandNames.join(', ')} · {cls?.name}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+              {pickerList.length === 0 && (
+                <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', textAlign: 'center', padding: 'var(--space-xl) 0' }}>
+                  No medications match "{pickerSearch}"
+                </p>
+              )}
+            </div>
+            <button className="btn btn--primary btn--full" style={{ height: '52px', borderRadius: 'var(--radius-lg)', flexShrink: 0 }} onClick={savePicker}>
+              Done{pickerDraft.length > 0 ? ` (${pickerDraft.length} selected)` : ''}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Browse full library */}
+      <div className="section-header stagger-item" style={{ marginBottom: 'var(--space-md)' }}>
+        <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)' }}>Browse Full Library</h2>
+        <p className="section-header__subtitle">Search or filter every medication by drug class</p>
       </div>
 
       <div className="search-bar stagger-item">
