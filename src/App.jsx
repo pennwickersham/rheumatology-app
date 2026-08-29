@@ -5,6 +5,7 @@ import { Dialog } from '@capacitor/dialog';
 import { useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import Layout from './components/Layout';
+import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
 import Diseases from './pages/Diseases';
 import Medications from './pages/Medications';
@@ -129,10 +130,20 @@ export default function App() {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const { user } = useAuth();
 
-  // Disclaimer shows once per app launch (cold start). It is intentionally NOT
-  // re-triggered on appStateChange — resuming from the background (app switch,
-  // system dialogs, share sheets, etc.) previously reset it, which made the
-  // modal reappear constantly while navigating the app.
+  // Re-trigger disclaimer every time the app comes to foreground
+  useEffect(() => {
+    const handleAppStateChange = ({ isActive }) => {
+      if (isActive) {
+        setDisclaimerAccepted(false);
+      }
+    };
+    
+    const stateListener = CapacitorApp.addListener('appStateChange', handleAppStateChange);
+    
+    return () => {
+      stateListener.then(listener => listener.remove());
+    };
+  }, []);
 
   const handleDecline = () => {
     CapacitorApp.exitApp();
@@ -145,6 +156,7 @@ export default function App() {
     <SubscriptionProvider>
       {showDisclaimer && <DisclaimerModal onAccept={() => setDisclaimerAccepted(true)} onDecline={handleDecline} />}
       <Router>
+        <ScrollToTop />
         <HardwareBackButton />
         <Routes>
           {/* Public Routes */}
