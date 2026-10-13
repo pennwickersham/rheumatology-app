@@ -5,6 +5,9 @@ import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { setExplainProvider } from './api/interactions.js'
 import { askGemini } from './api/gemini.js'
+import { applyTextSize } from './utils/textSize.js'
+
+applyTextSize();
 
 // Set up the plain language explanation provider for interaction check
 setExplainProvider((prompt) => askGemini(prompt));

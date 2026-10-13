@@ -143,7 +143,7 @@ export default function ClinicalTrials() {
       )}
 
       <div style={{ marginBottom: 'var(--space-3xl)' }}>
-        {trials.map((trial, i) => {
+        {trials.map((trial) => {
           const isExpanded = expandedId === trial.nctId;
           return (
             <div

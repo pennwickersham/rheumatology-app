@@ -62,6 +62,13 @@ export default function Layout({ children }) {
           <Icon name="stethoscope" size={22} color="var(--accent-primary)" style={{ marginRight: '8px' }} />
           Rheum Companion
         </div>
+        <button
+          onClick={() => navigate('/settings')}
+          aria-label="Settings"
+          style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '22px', padding: '8px' }}
+        >
+          ⚙
+        </button>
       </header>
 
       {/* Content */}

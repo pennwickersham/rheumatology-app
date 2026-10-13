@@ -25,7 +25,7 @@ export function AuthProvider({ children }) {
       } else {
         try {
           tracker = JSON.parse(tracker);
-        } catch (e) {
+        } catch {
           tracker = { visits: [] };
         }
       }

@@ -11,6 +11,7 @@ const quickLinks = [
   { iconName: 'bone', title: 'Diseases', subtitle: 'Learn about your condition', path: '/diseases', color: '#8b5cf6' },
   { iconName: 'pill', title: 'Medications', subtitle: 'FDA drug information', path: '/medications', color: '#06b6d4' },
   { iconName: 'zap', title: 'Drug Interactions', subtitle: 'Check medication safety', path: '/interactions', color: '#f43f5e', gated: true },
+  { iconName: 'clipboard', title: 'My Medications', subtitle: 'Your list and daily reminders', path: '/my-medications', color: '#14b8a6' },
   { iconName: 'microscope', title: 'Clinical Trials', subtitle: 'Find active studies', path: '/clinical-trials', color: '#a855f7' },
   { iconName: 'search', title: 'Symptom Lookup', subtitle: 'Symptom vs side effect', path: '/symptom-lookup', color: '#f59e0b' },
   { iconName: 'clipboard', title: 'Clinic Visit', subtitle: 'Maximize your visit', path: '/clinic-visit', color: '#10b981' },

@@ -76,7 +76,7 @@ export async function setupCustomerInfoListener(onUpdate) {
   try {
     // Remove any existing listener first
     if (customerInfoListenerRemover) {
-      try { customerInfoListenerRemover.remove(); } catch (_) {}
+      try { customerInfoListenerRemover.remove(); } catch { /* listener already removed */ }
       customerInfoListenerRemover = null;
     }
 
@@ -97,7 +97,7 @@ export async function setupCustomerInfoListener(onUpdate) {
     console.log('[SubscriptionService] CustomerInfo listener registered ✓');
     return () => {
       if (customerInfoListenerRemover) {
-        try { customerInfoListenerRemover.remove(); } catch (_) {}
+        try { customerInfoListenerRemover.remove(); } catch { /* listener already removed */ }
         customerInfoListenerRemover = null;
       }
     };

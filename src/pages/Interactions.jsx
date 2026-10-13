@@ -3,12 +3,19 @@
    "Explain in plain language" uses your existing Gemini client ONLY to
    rephrase label text. No severity grades. Framed as pharmacist prep. */
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { getMyMeds } from '../utils/myMeds';
+import { getMedicationById } from '../data/medications';
 import {
   reviewInteractions, explainFindings, pharmacistQuestions, hasExplainProvider,
 } from '../api/interactions';
 
 export default function Interactions() {
-  const [meds, setMeds] = useState([]);
+  const location = useLocation();
+  const [meds, setMeds] = useState(() => {
+    if (Array.isArray(location.state?.meds)) return location.state.meds;
+    return getMyMeds().map(m => getMedicationById(m.id)?.genericName || m.name).filter(Boolean);
+  });
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState('');

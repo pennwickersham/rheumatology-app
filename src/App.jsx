@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Dialog } from '@capacitor/dialog';
@@ -6,19 +6,24 @@ import { useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
-import Diseases from './pages/Diseases';
-import Medications from './pages/Medications';
-import SymptomLookup from './pages/SymptomLookup';
-import ClinicVisit from './pages/ClinicVisit';
-import WhenToCall from './pages/WhenToCall';
-import Chatbot from './pages/Chatbot';
-import Tracker from './pages/Tracker';
-import Interactions from './pages/Interactions';
-import ClinicalTrials from './pages/ClinicalTrials';
-import Assessments from './pages/Assessments';
+const Diseases = lazy(() => import('./pages/Diseases'));
+const Medications = lazy(() => import('./pages/Medications'));
+const SymptomLookup = lazy(() => import('./pages/SymptomLookup'));
+const ClinicVisit = lazy(() => import('./pages/ClinicVisit'));
+const WhenToCall = lazy(() => import('./pages/WhenToCall'));
+const Chatbot = lazy(() => import('./pages/Chatbot'));
+const Tracker = lazy(() => import('./pages/Tracker'));
+const Interactions = lazy(() => import('./pages/Interactions'));
+const ClinicalTrials = lazy(() => import('./pages/ClinicalTrials'));
+const Assessments = lazy(() => import('./pages/Assessments'));
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
+const MyMedications = lazy(() => import('./pages/MyMedications'));
+const Settings = lazy(() => import('./pages/Settings'));
+
+// Re-show the medical disclaimer only after the app has been away this long
+const DISCLAIMER_REPROMPT_MS = 30 * 60 * 1000;
 
 function DisclaimerModal({ onAccept, onDecline }) {
   return (
@@ -130,9 +135,12 @@ export default function App() {
   const { user } = useAuth();
 
   // Re-trigger disclaimer every time the app comes to foreground
+  const backgroundedAt = useRef(null);
   useEffect(() => {
     const handleAppStateChange = ({ isActive }) => {
-      if (isActive) {
+      if (!isActive) {
+        backgroundedAt.current = Date.now();
+      } else if (backgroundedAt.current && Date.now() - backgroundedAt.current > DISCLAIMER_REPROMPT_MS) {
         setDisclaimerAccepted(false);
       }
     };
@@ -166,6 +174,7 @@ export default function App() {
           <Route path="/*" element={
             <RequireAuth>
               <Layout>
+                <Suspense fallback={<div className="loading-container"><div className="spinner" /></div>}>
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/diseases" element={<Diseases />} />
@@ -180,7 +189,10 @@ export default function App() {
                   <Route path="/interactions" element={<Interactions />} />
                   <Route path="/clinical-trials" element={<ClinicalTrials />} />
                   <Route path="/assessments" element={<Assessments />} />
+                  <Route path="/my-medications" element={<MyMedications />} />
+                  <Route path="/settings" element={<Settings />} />
                 </Routes>
+                </Suspense>
               </Layout>
             </RequireAuth>
           } />

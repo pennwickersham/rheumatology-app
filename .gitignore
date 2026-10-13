@@ -24,3 +24,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local build/asset helper output and scratch files
+__pycache__/
+test_rgba*.png
+/screenshots/
