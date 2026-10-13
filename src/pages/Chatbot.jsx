@@ -19,7 +19,6 @@ export default function Chatbot() {
   const [messages, setMessages] = useState(() => loadFromStorage('chat_history', []));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [redFlag, setRedFlag] = useState(null);
   const messagesEnd = useRef(null);
   const navigate = useNavigate();
@@ -42,7 +41,6 @@ export default function Chatbot() {
     }
     
     if (!PROXY_URL) {
-      setError('AI service not configured.');
       setMessages(prev => [...prev, { role: 'assistant', content: '❌ Error: AI service not configured. Please set VITE_PROXY_URL environment variable.' }]);
       return;
     }
@@ -51,7 +49,6 @@ export default function Chatbot() {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setLoading(true);
-    setError('');
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -80,7 +77,6 @@ export default function Chatbot() {
         : m)));
     } catch (err) {
       if (err.name === 'AbortError') return;
-      setError(err.message);
       setMessages(prev => [...prev, { role: 'assistant', content: `❌ Error: ${err.message}`, isError: true }]);
     } finally {
       setLoading(false);

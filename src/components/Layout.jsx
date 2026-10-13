@@ -70,15 +70,24 @@ export default function Layout({ children }) {
           <Icon name="stethoscope" size={22} color="var(--accent-primary)" style={{ marginRight: '8px' }} />
           Rheum Companion
         </div>
-        {!isAuthPage && (
+        <div className="app-header__actions">
+          {!isAuthPage && (
+            <button
+              className="app-header__settings"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search the app"
+            >
+              <Icon name="search" size={18} />
+            </button>
+          )}
           <button
-            className="app-header__settings"
-            onClick={() => setSearchOpen(true)}
-            aria-label="Search the app"
+            onClick={() => navigate('/settings')}
+            aria-label="Settings"
+            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '22px', padding: '8px' }}
           >
-            <Icon name="search" size={18} />
+            ⚙
           </button>
-        )}
+        </div>
       </header>
 
       {/* Content */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { diseases, getDiseaseById, searchDiseases } from '../data/diseases';
 import { getMedicationById } from '../data/medications';
@@ -15,6 +15,17 @@ export default function Diseases() {
   const [articles, setArticles] = useState([]);
   const [loadingArticles, setLoadingArticles] = useState(false);
 
+  const loadArticles = useCallback(async (disease) => {
+    setLoadingArticles(true);
+    try {
+      const data = await getDiseaseLiterature(disease.name, disease.pubmedTerms);
+      setArticles(data);
+    } catch (e) {
+      console.error('Failed to load articles:', e);
+    }
+    setLoadingArticles(false);
+  }, []);
+
   useEffect(() => {
     if (id) {
       const disease = getDiseaseById(id);
@@ -26,18 +37,7 @@ export default function Diseases() {
       setSelectedDisease(null);
       setArticles([]);
     }
-  }, [id]);
-
-  async function loadArticles(disease) {
-    setLoadingArticles(true);
-    try {
-      const data = await getDiseaseLiterature(disease.name, disease.pubmedTerms);
-      setArticles(data);
-    } catch (e) {
-      console.error('Failed to load articles:', e);
-    }
-    setLoadingArticles(false);
-  }
+  }, [id, loadArticles]);
 
   const filtered = search ? searchDiseases(search) : diseases;
   
@@ -302,7 +302,7 @@ export default function Diseases() {
       </div>
 
       <div className="grid-1">
-        {displayDiseases.map((disease, i) => {
+        {displayDiseases.map((disease) => {
           const isUserDisease = user && user.diseases && user.diseases.includes(disease.id);
           return (
           <div

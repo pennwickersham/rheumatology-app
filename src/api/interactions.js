@@ -133,6 +133,7 @@ const CLASS_SYNONYMS = {
   tofacitinib: ['jak inhibitor'],
   upadacitinib: ['jak inhibitor'],
   baricitinib: ['jak inhibitor'],
+  brepocitinib: ['jak inhibitor'],
   warfarin: ['anticoagulant', 'blood thinner'],
   apixaban: ['anticoagulant', 'blood thinner'],
   rivaroxaban: ['anticoagulant', 'blood thinner'],

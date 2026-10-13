@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { medications, drugClasses, getMedicationById, getMedicationsByClass, searchMedications, getDrugClassById } from '../data/medications';
 import { getDrugDetails } from '../api/fda';
 import { formatSectionTitle, getSectionPriority } from '../utils/formatFda';
 import { Icon } from '../components/Icons';
+import { getMonitoring, CONTENT_LAST_REVIEWED } from '../data/monitoring';
+import { isInMyMeds, addMyMed, removeMyMed } from '../utils/myMeds';
 
 // openFDA effective_time is YYYYMMDD — format for citation display
 function formatLabelDate(raw) {
@@ -24,20 +26,9 @@ export default function Medications() {
   const [loadingFda, setLoadingFda] = useState(false);
   const [expandedSections, setExpandedSections] = useState({});
 
-  useEffect(() => {
-    if (id) {
-      const med = getMedicationById(id);
-      if (med) {
-        setSelectedMed(med);
-        loadFdaData(med);
-      }
-    } else {
-      setSelectedMed(null);
-      setFdaData(null);
-    }
-  }, [id]);
+  const [myMedsTick, setMyMedsTick] = useState(0);
 
-  async function loadFdaData(med) {
+  const loadFdaData = useCallback(async (med) => {
     setLoadingFda(true);
     try {
       const data = await getDrugDetails(med.fdaSearchTerm);
@@ -46,7 +37,21 @@ export default function Medications() {
       console.error('FDA data load error:', e);
     }
     setLoadingFda(false);
-  }
+  }, []);
+
+  useEffect(() => {
+    if (id) {
+      const med = getMedicationById(id);
+      if (med) {
+        setSelectedMed(med);
+        setFdaData(null);
+        loadFdaData(med);
+      }
+    } else {
+      setSelectedMed(null);
+      setFdaData(null);
+    }
+  }, [id, loadFdaData]);
 
   const toggleSection = (key) => {
     const opening = !expandedSections[key];
@@ -113,6 +118,19 @@ export default function Medications() {
               <Icon name="info" size={12} />
               {drugClass?.name}
             </span>
+            {(() => {
+              void myMedsTick;
+              const mine = isInMyMeds(selectedMed.id);
+              return (
+                <button
+                  className="badge glass"
+                  style={{ cursor: 'pointer', color: mine ? 'var(--success, #10b981)' : 'var(--text-secondary)' }}
+                  onClick={() => { mine ? removeMyMed(selectedMed.id) : addMyMed(selectedMed.id); setMyMedsTick(t => t + 1); }}
+                >
+                  {mine ? '✓ In My Medications' : '+ Add to My Medications'}
+                </button>
+              );
+            })()}
           </div>
         </div>
 
@@ -182,6 +200,20 @@ export default function Medications() {
 
           <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-lg)', lineHeight: 1.5 }}>
             Source: FDA Prescribing Information for {selectedMed.genericName} (see Sources &amp; References below). Physician-reviewed summary.
+          </p>
+        </div>
+
+        {/* Monitoring checklist */}
+        <div className="section-header stagger-item">
+          <h2 className="section-header__title" style={{ fontSize: 'var(--font-lg)' }}>Typical Monitoring</h2>
+          <p className="section-header__subtitle">General checklist — your doctor sets your personal schedule</p>
+        </div>
+        <div className="card glass-morphism stagger-item" style={{ marginBottom: 'var(--space-2xl)', padding: 'var(--space-lg)', display: 'block' }}>
+          <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', fontSize: 'var(--font-sm)', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+            {getMonitoring(selectedMed).map(item => <li key={item}>{item}</li>)}
+          </ul>
+          <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-md)' }}>
+            Content last reviewed {CONTENT_LAST_REVIEWED}.
           </p>
         </div>
 
@@ -323,10 +355,21 @@ export default function Medications() {
             <div className="empty-state__icon">
               <Icon name="clipboard" size={48} />
             </div>
-            <div className="empty-state__text">FDA label data is currently unavailable.</div>
+            <div className="empty-state__text">
+              The full FDA label could not be loaded. This can happen if you are offline, or if a newly approved drug has not yet appeared in the openFDA database.
+            </div>
             <button className="btn btn--outline mt-lg" onClick={() => loadFdaData(selectedMed)}>
               Try Again
             </button>
+            <a
+              className="btn btn--outline mt-lg"
+              href={`https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=${encodeURIComponent(selectedMed.brandNames[0] || selectedMed.genericName)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+            >
+              Search DailyMed (NIH) <Icon name="external-link" size={12} />
+            </a>
           </div>
         )}
       </div>
@@ -378,7 +421,7 @@ export default function Medications() {
       )}
 
       <div className="grid-1">
-        {filtered.map((med, i) => {
+        {filtered.map((med) => {
           const cls = getDrugClassById(med.drugClass);
           return (
             <div

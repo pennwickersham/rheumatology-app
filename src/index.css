@@ -297,6 +297,12 @@ img {
   color: var(--text-primary);
 }
 
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
 .app-content {
   flex: 1;
   padding: var(--space-xl) var(--space-lg);
