@@ -5,6 +5,8 @@ import { Dialog } from '@capacitor/dialog';
 import { useAuth } from './context/AuthContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import Layout from './components/Layout';
+import { getMyMeds } from './utils/myMeds';
+import { syncReminders, remindersSupported } from './utils/reminders';
 import Home from './pages/Home';
 const Diseases = lazy(() => import('./pages/Diseases'));
 const Medications = lazy(() => import('./pages/Medications'));
@@ -137,11 +139,20 @@ export default function App() {
   // Re-trigger disclaimer every time the app comes to foreground
   const backgroundedAt = useRef(null);
   useEffect(() => {
+    // Every-N-week and monthly reminders are one-off dates; top them up on each launch/resume.
+    const refreshReminders = () => {
+      if (remindersSupported() && getMyMeds().length) syncReminders(getMyMeds(), { prompt: false });
+    };
+    refreshReminders();
+
     const handleAppStateChange = ({ isActive }) => {
       if (!isActive) {
         backgroundedAt.current = Date.now();
-      } else if (backgroundedAt.current && Date.now() - backgroundedAt.current > DISCLAIMER_REPROMPT_MS) {
-        setDisclaimerAccepted(false);
+      } else {
+        refreshReminders();
+        if (backgroundedAt.current && Date.now() - backgroundedAt.current > DISCLAIMER_REPROMPT_MS) {
+          setDisclaimerAccepted(false);
+        }
       }
     };
     

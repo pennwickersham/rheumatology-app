@@ -148,7 +148,7 @@ export default function Assessments() {
 
           <button type="button" className="export" onClick={doExport}
             disabled={exporting || (!sc.length && !jm.length)}>
-            {exporting ? 'Building your flowsheet…' : '📄 Export one-page flowsheet (PDF)'}
+            {exporting ? 'Building your flowsheet…' : '📄 Export flowsheet (PDF)'}
           </button>
           {exportMsg && <p className="exmsg">{exportMsg}</p>}
           {!sc.length && !jm.length &&

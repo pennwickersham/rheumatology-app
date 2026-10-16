@@ -1,9 +1,11 @@
 /* =====================================================================
-   RheumCompanion — One-page PDF flowsheet
-   Builds a single-page, clinician-scannable summary of patient-reported
-   scores (pain, patient global, fatigue, morning stiffness severity and
-   duration), 28-joint counts, and (if available) 30-day tracker
-   averages, then hands the file to the patient:
+   RheumCompanion — PDF flowsheet
+   Builds a clinician-scannable summary (one page, or two when the
+   medication list is long) of patient-reported scores (pain, patient
+   global, fatigue, morning stiffness severity and duration), 28-joint
+   counts, the medication schedule with logged doses, injection sites and
+   holds, and (if available) 30-day tracker averages, then hands the file
+   to the patient:
      - Native (Capacitor): writes to app cache and opens the OS share
        sheet, so the patient can save to Files / iCloud / Google Drive /
        email — THEIR storage, not ours. No app-side cloud.
@@ -13,6 +15,12 @@
 import { jsPDF } from 'jspdf';
 import { getScoresEntries, getJointEntries, fmtStiffMin, jointLabel, JOINTS_28 }
   from './assessments';
+import { getMyMeds } from './myMeds';
+import { getMedicationById } from '../data/medications';
+import {
+  describeSchedule, getSchedule, needsAnchor, nextDue, getDoseLog, recentHolds,
+  holdReasonLabel, siteLabel, fmtShort, daysBetween, addDays, todayKey,
+} from './medSchedule';
 
 /* ---------- optional tracker adapter ----------
    The flowsheet will include 30-day symptom averages if it can find
@@ -81,6 +89,84 @@ function sparkline(doc, x, y, w, h, values, max) {
 const fmtDate = iso => new Date(iso).toLocaleDateString(undefined,
   { month: 'short', day: 'numeric' });
 
+const medName = m => getMedicationById(m.id)?.genericName || m.name || m.id;
+const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
+
+/* Medication rows plus 30-day dose/site and 90-day hold summaries. */
+function medicationSection(doc, M, W, y, ensure) {
+  const meds = getMyMeds();
+  y = ensure(y, 40);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(INK);
+  doc.text('Medications — schedule, doses and holds', M, y);
+  y += 14;
+  if (!meds.length) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(SUB);
+    doc.text('No medications listed in My Medications.', M, y);
+    return y + 12;
+  }
+
+  const cols = [M, M + 115, M + 300, M + 368, M + 436];
+  doc.setFontSize(8.5); doc.setTextColor(SUB); doc.setFont('helvetica', 'bold');
+  ['Medication', 'Schedule', 'Last dose', 'Next due', 'Status'].forEach((h, i) => doc.text(h, cols[i], y));
+  y += 4; doc.setDrawColor(LINE); doc.line(M, y, M + W, y); y += 11;
+
+  const log = getDoseLog();
+  for (const m of meds) {
+    const sched = doc.splitTextToSize(describeSchedule(m), cols[2] - cols[1] - 8).slice(0, 2);
+    y = ensure(y, sched.length * 10 + 2);
+    const s = getSchedule(m);
+    const mine = log.filter(d => d.medId === m.id);
+    const last = mine[mine.length - 1];
+    const due = needsAnchor(s) && !m.hold ? nextDue(m) : null;
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(INK);
+    doc.text(doc.splitTextToSize(medName(m), cols[1] - cols[0] - 6)[0], cols[0], y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(sched, cols[1], y);
+    doc.text(last ? fmtShort(last.date) : '—', cols[2], y);
+    doc.text(due ? fmtShort(due) : '—', cols[3], y);
+    if (m.hold) {
+      doc.setFont('helvetica', 'bold'); doc.setTextColor('#b42318');
+      doc.text('HELD since ' + fmtShort(m.hold.since), cols[4], y);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(INK);
+    } else {
+      doc.text('Active', cols[4], y);
+    }
+    y += sched.length * 10 + 2;
+  }
+
+  /* doses and injection sites, last 30 days */
+  const since30 = addDays(todayKey(), -30);
+  const doseParts = meds.map(m => {
+    const recent = log.filter(d => d.medId === m.id && d.date >= since30);
+    if (!recent.length) return null;
+    const sites = recent.filter(d => d.site).map(d => siteLabel(d.site, true));
+    return medName(m) + ' ' + recent.length + (sites.length ? ' (' + sites.join(', ') + ')' : '');
+  }).filter(Boolean);
+
+  doc.setFontSize(8.5); doc.setTextColor(SUB);
+  if (doseParts.length) {
+    const lines = doc.splitTextToSize('Doses logged, last 30 days: ' + doseParts.join(' · '), W);
+    y = ensure(y + 2, lines.length * 10);
+    doc.text(lines, M, y); y += lines.length * 10;
+  }
+
+  /* holds overlapping the last 90 days */
+  const holds = recentHolds(90).map(h => {
+    const days = daysBetween(h.start, h.end || todayKey());
+    const span = h.end
+      ? fmtShort(h.start) + ' – ' + fmtShort(h.end) + ', ' + plural(days, 'day')
+      : 'since ' + fmtShort(h.start) + ', ongoing' + (days > 0 ? ' (' + plural(days, 'day') + ')' : '');
+    return h.name + ' held ' + span + ' – ' + holdReasonLabel(h.reason).toLowerCase();
+  });
+  if (holds.length) {
+    const lines = doc.splitTextToSize('Holds, last 90 days: ' + holds.join('; '), W);
+    y = ensure(y + 2, lines.length * 10);
+    doc.setTextColor(INK);
+    doc.text(lines, M, y); y += lines.length * 10;
+  }
+  return y + 2;
+}
+
 /* ---------- main builder ---------- */
 export function buildFlowsheetPdf() {
   const sc = getScoresEntries();
@@ -90,6 +176,12 @@ export function buildFlowsheetPdf() {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });   // 612 x 792
   const M = 46, W = 612 - 2 * M;
   let y = 50;
+  /* start a new page when `need` points would run into the footer */
+  const ensure = (yy, need) => {
+    if (yy + need <= 730) return yy;
+    doc.addPage();
+    return 50;
+  };
 
   /* header */
   doc.setTextColor(INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
@@ -178,8 +270,13 @@ export function buildFlowsheetPdf() {
   }
   y += 14;
 
-  /* section 3 — tracker 30-day summary (optional) */
+  /* section 3 — medications */
+  y = medicationSection(doc, M, W, y, ensure);
+  y += 14;
+
+  /* section 4 — tracker 30-day summary (optional) */
   if (tracker && tracker.avgs && Object.keys(tracker.avgs).length) {
+    y = ensure(y, 50);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(INK);
     doc.text('Symptom tracker — last 30 days', M, y); y += 14;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(INK);
@@ -197,11 +294,16 @@ export function buildFlowsheetPdf() {
     y += 8;
   }
 
-  /* footer */
-  doc.setDrawColor(LINE); doc.line(M, 742, M + W, 742);
-  doc.setFontSize(7.5); doc.setTextColor(SUB);
-  doc.text('Patient-entered data for discussion with the care team. Not a medical record and not medical advice. ' +
-    'RheumCompanion \u00B7 from the author of The Resilient Path.', M, 754);
+  /* footer, on every page */
+  const pages = doc.getNumberOfPages();
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(LINE); doc.line(M, 742, M + W, 742);
+    doc.setFontSize(7.5); doc.setTextColor(SUB);
+    doc.text('Patient-entered data for discussion with the care team. Not a medical record and not medical advice. ' +
+      'RheumCompanion \u00B7 from the author of The Resilient Path.', M, 754);
+    if (pages > 1) doc.text('Page ' + p + ' of ' + pages, M + W, 766, { align: 'right' });
+  }
 
   return doc;
 }
