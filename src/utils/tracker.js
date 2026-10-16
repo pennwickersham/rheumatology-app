@@ -75,39 +75,3 @@ export function generateInsights(entries) {
 
   return insights;
 }
-
-export function generateShareText(entries) {
-  if (!entries || entries.length === 0) return 'No tracker data available to share.';
-  
-  // Last 30 days maximum
-  const recent = entries.slice(-30).reverse();
-  
-  let txt = `RHEUMATOLOGY PATIENT LOG\nGenerated on: ${new Date().toLocaleDateString()}\n\n`;
-  
-  recent.forEach(e => {
-    txt += `--- Date: ${e.date} ---\n`;
-    txt += `Pain: ${e.pain || 0}/10\n`;
-    txt += `Stiffness: ${e.stiffness || 0}/10\n`;
-    txt += `Fatigue: ${e.fatigue || 0}/10\n`;
-    txt += `Swelling: ${e.swelling || 0}/10\n`;
-    txt += `Rash: ${e.rash ? 'Yes' : 'No'}\n`;
-    if (e.custom && Object.keys(e.custom).length > 0) {
-      txt += `Other:\n`;
-      Object.entries(e.custom).forEach(([key, val]) => {
-        txt += `- ${key}: ${val}/10\n`;
-      });
-    }
-    if (e.triggers) {
-      txt += `Triggers: ${e.triggers}\n`;
-    }
-    if (e.medications) {
-      txt += `Medications: ${e.medications}\n`;
-    }
-    if (e.notes) {
-      txt += `Notes: ${e.notes}\n`;
-    }
-    txt += `\n`;
-  });
-  
-  return txt;
-}

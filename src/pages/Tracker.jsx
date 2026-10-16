@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icons';
 import { 
   getTrackerData, 
   saveTrackerEntry, 
   generateInsights, 
-  generateShareText,
   getCustomSymptoms,
   saveCustomSymptoms
 } from '../utils/tracker';
-import { Share } from '@capacitor/share';
 
 export default function Tracker() {
+  const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [customSymptoms, setCustomSymptoms] = useState([]);
   const [insights, setInsights] = useState([]);
@@ -71,20 +71,8 @@ export default function Tracker() {
     alert(`Entry saved for ${new Date(date).toLocaleDateString()}`);
   };
 
-  const handleShare = async () => {
-    const txt = generateShareText(entries);
-    try {
-      await Share.share({
-        title: 'Rheumatology Tracker Report',
-        text: txt,
-        dialogTitle: 'Share with Medical Team',
-      });
-    } catch (e) {
-      console.error(e);
-      navigator.clipboard.writeText(txt);
-      alert('Report copied to clipboard instead! Your device may not support native sharing.');
-    }
-  };
+  // One shared summary (scores, joints, meds, tracker) lives on the care-team share page.
+  const handleShare = () => navigate('/share');
 
   const addCustomSymptom = () => {
     if (!newCustomSymptom.trim()) return;

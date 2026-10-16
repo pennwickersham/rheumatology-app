@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { clinicVisitSections, sampleQuestions } from '../data/clinicVisit';
 import { saveToStorage, loadFromStorage } from '../utils/storage';
 import { Icon } from '../components/Icons';
 
 export default function ClinicVisit() {
+  const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState({ 'before-visit': true });
   const [checkedItems, setCheckedItems] = useState(() => loadFromStorage('clinic_checklist', {}));
 
@@ -40,6 +42,22 @@ export default function ClinicVisit() {
       <div className="section-header">
         <h1 className="section-header__title" style={{ fontSize: 'var(--font-3xl)' }}>Clinic Visit</h1>
         <p className="section-header__subtitle">Maximize your time with your rheumatologist</p>
+      </div>
+
+      {/* One summary to send ahead or bring to the visit */}
+      <div className="card glass-morphism" style={{ padding: 'var(--space-lg)', display: 'block', marginBottom: 'var(--space-xl)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
+          <Icon name="share" size={22} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: 'var(--text-primary)' }}>Bring your data, not just your memory</div>
+            <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginTop: '2px' }}>
+              Send your scores, joint counts, medications and tracker notes as a PDF or text before your appointment.
+            </p>
+          </div>
+        </div>
+        <button className="btn btn--primary" style={{ width: '100%', marginTop: 'var(--space-md)' }} onClick={() => navigate('/share')}>
+          Share with my care team
+        </button>
       </div>
 
       {/* Progress Card */}

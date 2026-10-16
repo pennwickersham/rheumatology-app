@@ -1,8 +1,9 @@
 /* RheumCompanion — My Scores (Assessments) page
    Symptom check-in (pain, patient global, fatigue, morning stiffness
-   severity + duration) + 28-joint map + history + one-page PDF flowsheet
-   export. Register at /assessments per INTEGRATION-GUIDE.md. */
+   severity + duration) + 28-joint map + history, with a link to the
+   care-team share page (PDF or text). Register at /assessments per INTEGRATION-GUIDE.md. */
 import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SymptomScores from '../components/SymptomScores';
 import JointMap from '../components/JointMap';
 import { ReviewedBadge, BrandFooter } from '../components/ReviewedBadge';
@@ -10,7 +11,6 @@ import {
   getScoresEntries, deleteScoresEntry, fmtStiffMin,
   getJointEntries, deleteJointEntry,
 } from '../utils/assessments';
-import { exportFlowsheet } from '../utils/flowsheet';
 
 const fmt = iso => new Date(iso).toLocaleDateString(undefined,
   { year: '2-digit', month: 'short', day: 'numeric' });
@@ -19,23 +19,11 @@ export default function Assessments() {
   const [tab, setTab] = useState('scores');
   const [, bump] = useState(0);
   const refresh = useCallback(() => bump(n => n + 1), []);
-  const [exporting, setExporting] = useState(false);
-  const [exportMsg, setExportMsg] = useState('');
+  const navigate = useNavigate();
 
   const sc = getScoresEntries();
   const jm = getJointEntries();
 
-  const doExport = async () => {
-    setExporting(true); setExportMsg('');
-    try {
-      await exportFlowsheet();
-      setExportMsg('Flowsheet ready — choose where to save or send it.');
-    } catch (e) {
-      setExportMsg('Export failed: ' + (e.message || 'unknown error'));
-    } finally {
-      setExporting(false);
-    }
-  };
 
   return (
     <div className="as">
@@ -146,13 +134,9 @@ export default function Assessments() {
             )}
           </div>
 
-          <button type="button" className="export" onClick={doExport}
-            disabled={exporting || (!sc.length && !jm.length)}>
-            {exporting ? 'Building your flowsheet…' : '📄 Export one-page flowsheet (PDF)'}
+          <button type="button" className="export" onClick={() => navigate('/share')}>
+            📄 Share with my care team (PDF or text)
           </button>
-          {exportMsg && <p className="exmsg">{exportMsg}</p>}
-          {!sc.length && !jm.length &&
-            <p className="exmsg">Record at least one check-in or joint map to enable export.</p>}
 
           <p className="privacy">
             Your scores are stored only on this device. Exporting opens your phone's
