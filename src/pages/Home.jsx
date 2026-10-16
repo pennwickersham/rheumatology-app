@@ -16,6 +16,8 @@ const quickLinks = [
   { iconName: 'search', title: 'Symptom Lookup', subtitle: 'Symptom vs side effect', path: '/symptom-lookup', color: '#f59e0b' },
   { iconName: 'clipboard', title: 'Clinic Visit', subtitle: 'Maximize your visit', path: '/clinic-visit', color: '#10b981' },
   { iconName: 'share', title: 'Share with Care Team', subtitle: 'PDF or text summary', path: '/share', color: '#0ea5e9' },
+  { iconName: 'camera', title: 'Flare Photos', subtitle: 'Private, on this device only', path: '/photos', color: '#ec4899' },
+  { iconName: 'cloud', title: 'Weather & Symptoms', subtitle: 'Pressure, humidity and pain', path: '/weather', color: '#64748b' },
   { iconName: 'phone', title: 'When to Call', subtitle: 'Urgency guidance', path: '/when-to-call', color: '#ef4444' },
   { iconName: 'chat', title: 'Ask RheumBot', subtitle: 'AI-powered Q&A', path: '/chatbot', color: '#3b82f6', gated: true },
 ];
