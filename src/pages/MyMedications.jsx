@@ -286,7 +286,7 @@ export default function MyMedications() {
       <div className="card glass-morphism" style={{ padding: 'var(--space-lg)', display: 'block', marginBottom: 'var(--space-lg)' }}>
         <label htmlFor="mm-pick" style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)' }}>Add from the medication library</label>
         <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: '6px' }}>
-          <select id="mm-pick" value={pick} onChange={e => setPick(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '10px' }}>
+          <select id="mm-pick" value={pick} onChange={e => setPick(e.target.value)} style={{ flex: 1, minWidth: 0, padding: '12px', borderRadius: '10px' }}>
             <option value="">Choose a medication…</option>
             {[...medications].sort((a, b) => a.genericName.localeCompare(b.genericName)).map(m => (
               <option key={m.id} value={m.id}>{m.genericName} ({m.brandNames[0]})</option>
@@ -304,7 +304,7 @@ export default function MyMedications() {
             onChange={e => setCustom(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addCustom()}
             placeholder="e.g. lisinopril"
-            style={{ flex: 1, padding: '12px', borderRadius: '10px' }}
+            style={{ flex: 1, minWidth: 0, padding: '12px', borderRadius: '10px' }}
           />
           <button className="btn" onClick={addCustom} disabled={!custom.trim()}>Add</button>
         </div>
@@ -334,13 +334,14 @@ export default function MyMedications() {
           {list.length >= 2 && (
             <button className="btn mt-lg" style={{ width: '100%' }} onClick={checkInteractions}>Check interactions for my list</button>
           )}
+          <button className="btn btn--outline mt-lg" style={{ width: '100%' }} onClick={() => navigate('/share')}>Share with my care team</button>
         </>
       )}
 
       {status && <p role="status" style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', marginTop: 'var(--space-md)' }}>{status}</p>}
       <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-lg)' }}>
         Suggested schedules are typical starting points only; set each one to match your prescription. Reminder notifications never show
-        drug names on your lock screen. Doses, injection sites and holds appear on the flowsheet you can export from My Scores. This list
+        drug names on your lock screen. Doses, injection sites and holds are included when you share a summary with your care team. This list
         is for your convenience and does not replace your doctor or pharmacist's instructions.
       </p>
     </div>
