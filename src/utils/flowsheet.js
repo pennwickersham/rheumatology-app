@@ -1,67 +1,25 @@
 /* =====================================================================
-   RheumCompanion — One-page PDF flowsheet
-   Builds a single-page, clinician-scannable summary of patient-reported
-   scores (pain, patient global, fatigue, morning stiffness severity and
-   duration), 28-joint counts, and (if available) 30-day tracker
-   averages, then hands the file to the patient:
-     - Native (Capacitor): writes to app cache and opens the OS share
-       sheet, so the patient can save to Files / iCloud / Google Drive /
-       email — THEIR storage, not ours. No app-side cloud.
-     - Web: downloads the PDF directly.
+   RheumCompanion — PDF flowsheet
+   Renders a care-team report (utils/careReport.js) as a clinician-
+   scannable PDF: the patient's note, patient-reported scores, 28-joint
+   counts, the medication schedule with logged doses, injection sites and
+   holds, and the daily tracker summary. One page in the common case; a
+   second page is added when there is more to show.
+   Sharing (share sheet on native, download on web) lives in careReport.js.
    Dependency: jspdf  (npm i jspdf)
    ===================================================================== */
 import { jsPDF } from 'jspdf';
-import { getScoresEntries, getJointEntries, fmtStiffMin, jointLabel, JOINTS_28 }
-  from './assessments';
-
-/* ---------- optional tracker adapter ----------
-   The flowsheet will include 30-day symptom averages if it can find
-   tracker data. Wire your existing tracker explicitly (preferred):
-     import { setTrackerDataProvider } from '../utils/flowsheet';
-     setTrackerDataProvider(() => ({ avgs:{Pain:4.2,...}, flareDays:3, meds:['MTX'] }));
-   Otherwise a best-effort localStorage scan runs, and the section is
-   skipped gracefully if nothing usable is found. */
-let trackerProvider = null;
-export function setTrackerDataProvider(fn) { trackerProvider = fn; }
-
-function scanTrackerFallback() {
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!/rheum/i.test(k) || !/track/i.test(k)) continue;
-      const data = JSON.parse(localStorage.getItem(k));
-      const entries = Array.isArray(data) ? data
-        : (data && Array.isArray(data.entries) ? data.entries : null);
-      if (!entries || !entries.length) continue;
-      const cutoff = Date.now() - 30 * 864e5;
-      const recent = entries.filter(e => {
-        const d = new Date(e.date || e.day || e.timestamp || 0).getTime();
-        return d > cutoff;
-      });
-      if (!recent.length) continue;
-      const sums = {}, counts = {};
-      const SYMS = ['pain', 'stiffness', 'fatigue', 'swelling', 'rash'];
-      for (const e of recent) {
-        const src = e.symptoms || e;
-        for (const s of SYMS) {
-          const v = Number(src[s]);
-          if (!Number.isNaN(v) && src[s] != null) {
-            sums[s] = (sums[s] || 0) + v; counts[s] = (counts[s] || 0) + 1;
-          }
-        }
-      }
-      const avgs = {};
-      for (const s of Object.keys(sums)) {
-        avgs[s[0].toUpperCase() + s.slice(1)] = Math.round(sums[s] / counts[s] * 10) / 10;
-      }
-      if (Object.keys(avgs).length) return { avgs, days: recent.length };
-    }
-  } catch { /* tracker format unknown — skip section */ }
-  return null;
-}
+import { fmtStiffMin, JOINTS_28, JOINTS_68 } from './assessments';
+import { fmtShort } from './medSchedule';
+import { collectReport, rangeLabel, jointSummary, entryPattern, isoDay, plural } from './careReport';
+import { signLabel } from './photoVault';
+import {
+  BODY_W, BODY_POINTS, BODY_SIZE, BODY_HEAD, BODY_LINES, HAND_W, FOOT_W, handGeometry, footGeometry,
+} from '../data/jointGeometry';
 
 /* ---------- drawing helpers ---------- */
-const INK = '#1a2233', SUB = '#5a6478', LINE = '#c9d1e0', ACC = '#2f6fd0';
+const INK = '#1a2233', SUB = '#5a6478', LINE = '#c9d1e0', ACC = '#2f6fd0', HOLD = '#b42318';
+const M = 46, W = 612 - 2 * M, TOP = 50, BOTTOM = 730;
 
 function sparkline(doc, x, y, w, h, values, max) {
   if (values.length < 2) return;
@@ -78,163 +36,296 @@ function sparkline(doc, x, y, w, h, values, max) {
   doc.circle(px, py, 1.6, 'F');
 }
 
-const fmtDate = iso => new Date(iso).toLocaleDateString(undefined,
-  { month: 'short', day: 'numeric' });
+const day = iso => fmtShort(isoDay(iso));
+
+/* ---------- joint diagram (same geometry as the on-screen map) ---------- */
+const TENDER = '#e8590c', SWOLLEN = '#2f6fd0', FIGURE = '#d5dbe6';
+
+function polyline(doc, line, ox, oy, k, closed = false) {
+  const p = line.map(([x, y]) => [ox + x * k, oy + y * k]);
+  for (let i = 1; i < p.length; i++) doc.line(p[i - 1][0], p[i - 1][1], p[i][0], p[i][1]);
+  if (closed) doc.line(p[p.length - 1][0], p[p.length - 1][1], p[0][0], p[0][1]);
+}
+
+function jointDot(doc, x, y, r, st) {
+  if (st && st.s) { doc.setFillColor(SWOLLEN); doc.circle(x, y, r, 'F'); }
+  doc.setLineWidth(st && st.t ? 1.1 : 0.4);
+  doc.setDrawColor(st && st.t ? TENDER : '#9aa5b8');
+  doc.circle(x, y, st && st.t ? r + 0.5 : r, 'S');
+}
+
+// Draws the latest joint map with its top-left at (x0, y0); returns the y just below it.
+function drawJointDiagram(doc, entry, x0, y0) {
+  const set = entry.set === 68 ? 68 : 28;
+  const ids = new Set(set === 68 ? JOINTS_68 : JOINTS_28);
+  const joints = entry.joints || {};
+
+  const kb = 0.36;
+  const top = set === 68 ? 0 : 40, bodyH = (set === 68 ? 400 : 270) * kb;
+  const ox = x0, oy = y0 - top * kb;
+  doc.setDrawColor(FIGURE); doc.setLineWidth(0.8);
+  doc.circle(ox + BODY_HEAD.cx * kb, oy + BODY_HEAD.cy * kb, BODY_HEAD.r * kb, 'S');
+  BODY_LINES.forEach(l => polyline(doc, l, ox, oy, kb));
+  for (const [id, [x, y]] of Object.entries(BODY_POINTS)) {
+    if (!ids.has(id)) continue;
+    const small = BODY_SIZE[id.replace(/_[LR]$/, '')];
+    jointDot(doc, ox + x * kb, oy + y * kb, small ? 1.8 : 3, joints[id]);
+  }
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(SUB);
+  doc.text('R', x0 + 4, y0 + 6); doc.text('L', x0 + BODY_W * kb - 8, y0 + 6);
+
+  const kh = 0.27, hx = x0 + BODY_W * kb + 6, gap = 3;
+  let hy = y0;
+  ['R', 'L'].forEach((side, i) => {
+    const g = handGeometry(side, set);
+    const hox = hx + i * (HAND_W * kh + gap), hoy = y0 - g.view[1] * kh;
+    doc.setDrawColor(FIGURE); doc.setLineWidth(0.6);
+    polyline(doc, g.palm, hox, hoy, kh, true);
+    g.fingers.forEach(f => polyline(doc, f, hox, hoy, kh));
+    for (const [id, [x, y]] of Object.entries(g.points)) jointDot(doc, hox + x * kh, hoy + y * kh, 1.9, joints[id]);
+    doc.text(side === 'R' ? 'Right hand' : 'Left hand', hox + 2, y0 + g.view[3] * kh + 7);
+    hy = y0 + g.view[3] * kh + 12;
+  });
+  if (set === 68) {
+    ['R', 'L'].forEach((side, i) => {
+      const g = footGeometry(side);
+      const fox = hx + i * (FOOT_W * kh + gap), foy = hy - g.view[1] * kh;
+      doc.setDrawColor(FIGURE); doc.setLineWidth(0.6);
+      polyline(doc, g.sole, fox, foy, kh, true);
+      g.toes.forEach(t => polyline(doc, t, fox, foy, kh));
+      for (const [id, [x, y]] of Object.entries(g.points)) jointDot(doc, fox + x * kh, foy + y * kh, 1.9, joints[id]);
+      doc.text(side === 'R' ? 'Right foot' : 'Left foot', fox + 2, hy + g.view[3] * kh + 7);
+    });
+    hy += 140 * kh + 12;
+  }
+
+  const legendY = Math.max(y0 + bodyH, hy) + 6;
+  doc.setLineWidth(1.1); doc.setDrawColor(TENDER); doc.circle(x0 + 3, legendY - 2, 2.4, 'S');
+  doc.text('tender', x0 + 8, legendY);
+  doc.setFillColor(SWOLLEN); doc.circle(x0 + 40, legendY - 2, 2.4, 'F');
+  doc.text('swollen', x0 + 45, legendY);
+  doc.text('Latest map, ' + set + '-joint set', x0 + 82, legendY);
+  return legendY + 8;
+}
 
 /* ---------- main builder ---------- */
-export function buildFlowsheetPdf() {
-  const sc = getScoresEntries();
-  const jm = getJointEntries();
-  const tracker = trackerProvider ? trackerProvider() : scanTrackerFallback();
-
+export function buildFlowsheetPdf(report = collectReport()) {
+  const r = report;
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });   // 612 x 792
-  const M = 46, W = 612 - 2 * M;
-  let y = 50;
+  let y = TOP;
+
+  /* start a new page when `need` points would run into the footer */
+  const ensure = need => { if (y + need > BOTTOM) { doc.addPage(); y = TOP; } };
+  const title = text => {
+    ensure(44);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(INK);
+    doc.text(text, M, y);
+  };
+  const empty = text => {
+    y += 14; doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(SUB);
+    doc.text(text, M, y); y += 12;
+  };
+  const para = (text, { size = 8.5, color = SUB, maxLines = 99, width = W } = {}) => {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(size); doc.setTextColor(color);
+    const lines = doc.splitTextToSize(text, width).slice(0, maxLines);
+    ensure(lines.length * (size + 1.5));
+    doc.text(lines, M, y);
+    y += lines.length * (size + 1.5);
+  };
+  const header = (cols, labels, width = W) => {
+    doc.setFontSize(8.5); doc.setTextColor(SUB); doc.setFont('helvetica', 'bold');
+    labels.forEach((h, i) => doc.text(h, cols[i], y));
+    y += 4; doc.setDrawColor(LINE); doc.setLineWidth(1); doc.line(M, y, M + width, y); y += 11;
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(INK);
+  };
 
   /* header */
   doc.setTextColor(INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(17);
-  doc.text('RheumCompanion — Patient Flowsheet', M, y);
+  doc.text('RheumCompanion — Patient Summary', M, y);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(SUB);
   y += 15;
-  doc.text('Patient-reported data, entered by the patient in the RheumCompanion app. ' +
-    'Generated ' + new Date().toLocaleDateString() + '.', M, y);
+  doc.text('Patient-reported data, entered by the patient in the RheumCompanion app. Covers the last ' +
+    r.days + ' days (' + rangeLabel(r) + ').', M, y);
   y += 12;
-  doc.text('App content reviewed by Pendleton B. Wickersham, MD, Rheumatologist \u00B7 ' +
+  doc.text('App content reviewed by Pendleton B. Wickersham, MD, Rheumatologist · ' +
     'brewsterwickershampublications.com', M, y);
   y += 10; doc.setDrawColor(LINE); doc.setLineWidth(1); doc.line(M, y, M + W, y);
   y += 20;
 
-  /* section 1 — patient-reported scores */
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(INK);
-  doc.text('Patient-reported scores (0\u201310)', M, y);
-  if (sc.length) {
-    const recent = sc.slice(-8);
-    sparkline(doc, M + 430, y - 9, 90, 26, recent.map(e => e.pain), 10);
-    doc.setFontSize(7); doc.setTextColor(SUB);
-    doc.text('pain trend', M + 430, y + 24);
-    y += 14;
-    doc.setFontSize(8.5); doc.setTextColor(SUB); doc.setFont('helvetica', 'bold');
-    const cols = [M, M + 70, M + 130, M + 205, M + 270, M + 345];
-    ['Date', 'Pain', 'Pt global', 'Fatigue', 'Stiffness', 'AM stiffness']
-      .forEach((h, i) => doc.text(h, cols[i], y));
-    y += 4; doc.setDrawColor(LINE); doc.line(M, y, M + W, y); y += 11;
-    doc.setFont('helvetica', 'normal'); doc.setTextColor(INK);
-    for (const e of recent) {
-      doc.text(fmtDate(e.date), cols[0], y);
-      doc.setFont('helvetica', 'bold');
-      doc.text(String(e.pain), cols[1], y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(e.ptGlobal), cols[2], y);
-      doc.text(String(e.fatigue), cols[3], y);
-      doc.text(String(e.stiffSev), cols[4], y);
-      doc.text(fmtStiffMin(e.stiffMin), cols[5], y);
-      y += 12;
-    }
-    doc.setFontSize(7.5); doc.setTextColor(SUB);
-    doc.text('Pain: 0 none \u2013 10 worst \u00B7 Pt global: 0 very well \u2013 10 very poorly \u00B7 ' +
-      'Fatigue: 0 none \u2013 10 exhausted \u00B7 AM stiffness = duration on a typical morning', M, y);
+  /* patient's note */
+  if (r.note) {
+    title('Note from the patient');
+    y += 13;
+    para(r.note, { size: 9.5, color: INK, maxLines: 12 });
     y += 12;
-  } else {
-    y += 14; doc.setFontSize(9); doc.setTextColor(SUB);
-    doc.text('No symptom check-ins recorded yet.', M, y); y += 12;
   }
-  y += 14;
 
-  /* section 2 — joint counts */
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(INK);
-  doc.text('Joint counts (28-joint set)', M, y);
-  if (jm.length) {
-    const recent = jm.slice(-8);
-    sparkline(doc, M + 430, y - 9, 90, 26, recent.map(e => e.tjc28), 28);
+  /* patient-reported scores */
+  if (r.scores) {
+    title('Patient-reported scores (0–10)');
+    if (r.scores.length) {
+      const recent = r.scores.slice(-8);
+      sparkline(doc, M + 430, y - 9, 90, 26, recent.map(e => e.pain), 10);
+      doc.setFontSize(7); doc.setTextColor(SUB);
+      doc.text('pain trend', M + 430, y + 24);
+      y += 14;
+      const cols = [M, M + 70, M + 130, M + 205, M + 270, M + 345];
+      header(cols, ['Date', 'Pain', 'Pt global', 'Fatigue', 'Stiffness', 'AM stiffness']);
+      for (const e of recent) {
+        doc.text(day(e.date), cols[0], y);
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(e.pain), cols[1], y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(String(e.ptGlobal), cols[2], y);
+        doc.text(String(e.fatigue), cols[3], y);
+        doc.text(String(e.stiffSev), cols[4], y);
+        doc.text(fmtStiffMin(e.stiffMin), cols[5], y);
+        y += 12;
+      }
+      para((r.scores.length > recent.length ? 'Latest ' + recent.length + ' of ' + plural(r.scores.length, 'check-in') + ' in this period. ' : '') +
+        'Pain: 0 none – 10 worst · Pt global: 0 very well – 10 very poorly · ' +
+        'Fatigue: 0 none – 10 exhausted · AM stiffness = duration on a typical morning', { size: 7.5 });
+    } else {
+      empty('No symptom check-ins in this period.');
+    }
     y += 14;
-    doc.setFontSize(8.5); doc.setTextColor(SUB); doc.setFont('helvetica', 'bold');
-    const cols = [M, M + 90, M + 190];
-    ['Date', 'Tender (TJC28)', 'Swollen (SJC28)'].forEach((h, i) => doc.text(h, cols[i], y));
-    y += 4; doc.setDrawColor(LINE); doc.line(M, y, M + 300, y); y += 11;
-    doc.setFont('helvetica', 'normal'); doc.setTextColor(INK);
-    for (const e of recent) {
-      doc.text(fmtDate(e.date), cols[0], y);
-      doc.text(String(e.tjc28), cols[1], y);
-      doc.text(String(e.sjc28), cols[2], y);
-      y += 12;
-    }
-    /* latest involved joints, wrapped */
-    const latest = jm[jm.length - 1];
-    const involved = JOINTS_28.filter(j => latest.joints[j] &&
-      (latest.joints[j].t || latest.joints[j].s))
-      .map(j => jointLabel(j) +
-        (latest.joints[j].t && latest.joints[j].s ? ' (T+S)'
-          : latest.joints[j].t ? ' (T)' : ' (S)'));
-    if (involved.length) {
-      y += 2; doc.setFontSize(8.5); doc.setTextColor(SUB);
-      const lines = doc.splitTextToSize(
-        'Latest (' + fmtDate(latest.date) + '): ' + involved.join(', '), W);
-      doc.text(lines.slice(0, 3), M, y);
-      y += Math.min(lines.length, 3) * 10;
-    }
-  } else {
-    y += 14; doc.setFontSize(9); doc.setTextColor(SUB);
-    doc.text('No joint map entries recorded yet.', M, y); y += 12;
   }
-  y += 14;
 
-  /* section 3 — tracker 30-day summary (optional) */
-  if (tracker && tracker.avgs && Object.keys(tracker.avgs).length) {
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(INK);
-    doc.text('Symptom tracker — last 30 days', M, y); y += 14;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(INK);
-    const parts = Object.entries(tracker.avgs)
-      .map(([k, v]) => k + ' avg ' + v + '/10');
-    if (tracker.days) parts.push(tracker.days + ' days logged');
-    if (tracker.flareDays != null) parts.push(tracker.flareDays + ' flare day(s)');
-    doc.text(doc.splitTextToSize(parts.join('  \u00B7  '), W), M, y);
+  /* joint counts, with a body diagram of the latest map */
+  if (r.joints) {
+    if (r.joints.length) {
+      const recent = r.joints.slice(-8);
+      const latest = r.joints[r.joints.length - 1];
+      ensure(190);
+      title('Joint counts');
+      const top = y + 6;
+      y += 14;
+      const cols = [M, M + 58, M + 124, M + 192];
+      header(cols, ['Date', 'Tender', 'Swollen', 'Pattern'], 300);
+      for (const e of recent) {
+        doc.text(day(e.date), cols[0], y);
+        doc.text(e.set === 68 ? e.tjc68 + '/68' : e.tjc28 + '/28', cols[1], y);
+        doc.text(e.set === 68 ? e.sjc66 + '/66' : e.sjc28 + '/28', cols[2], y);
+        doc.text(entryPattern(e).extent, cols[3], y);
+        y += 12;
+      }
+      y += 2;
+      para('Latest pattern: ' + entryPattern(latest).text, { color: INK, width: 300, maxLines: 3 });
+      const involved = jointSummary(latest);
+      if (involved.length) para('Latest joints: ' + involved.join(', '), { maxLines: 5, width: 300 });
+      para('Pattern = count of marked joints and left/right match; descriptive, not a diagnosis.', { size: 7, width: 300 });
+      y = Math.max(y, drawJointDiagram(doc, latest, M + 318, top));
+    } else {
+      title('Joint counts');
+      empty('No joint map entries in this period.');
+    }
     y += 14;
-    if (tracker.meds && tracker.meds.length) {
-      doc.setTextColor(SUB); doc.setFontSize(8.5);
-      doc.text(doc.splitTextToSize('Medications logged: ' + tracker.meds.join(', '), W), M, y);
-      y += 12;
-    }
-    y += 8;
   }
 
-  /* footer */
-  doc.setDrawColor(LINE); doc.line(M, 742, M + W, 742);
-  doc.setFontSize(7.5); doc.setTextColor(SUB);
-  doc.text('Patient-entered data for discussion with the care team. Not a medical record and not medical advice. ' +
-    'RheumCompanion \u00B7 from the author of The Resilient Path.', M, 754);
+  /* medications */
+  if (r.meds) {
+    title('Medications — schedule, doses and holds');
+    y += 14;
+    if (r.meds.rows.length) {
+      const cols = [M, M + 115, M + 300, M + 368, M + 436];
+      header(cols, ['Medication', 'Schedule', 'Last dose', 'Next due', 'Status']);
+      for (const m of r.meds.rows) {
+        const sched = doc.splitTextToSize(m.schedule, cols[2] - cols[1] - 8).slice(0, 2);
+        ensure(sched.length * 10 + 2);
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(INK);
+        doc.text(doc.splitTextToSize(m.name, cols[1] - cols[0] - 6)[0], cols[0], y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(sched, cols[1], y);
+        doc.text(m.lastDose ? fmtShort(m.lastDose) : '—', cols[2], y);
+        doc.text(m.nextDue ? fmtShort(m.nextDue) : '—', cols[3], y);
+        if (m.hold) {
+          doc.setFont('helvetica', 'bold'); doc.setTextColor(HOLD);
+          doc.text('HELD since ' + fmtShort(m.hold.since), cols[4], y);
+          doc.setFont('helvetica', 'normal'); doc.setTextColor(INK);
+        } else {
+          doc.text('Active', cols[4], y);
+        }
+        y += sched.length * 10 + 2;
+      }
+      if (r.meds.doses.length) {
+        y += 2;
+        para('Doses logged in this period: ' + r.meds.doses.map(d =>
+          d.name + ' ' + d.count + (d.sites.length ? ' (' + d.sites.join(', ') + ')' : '')).join(' · '));
+      }
+      if (r.meds.holds.length) {
+        y += 2;
+        para('Holds: ' + r.meds.holds.join('; '), { color: INK });
+      }
+    } else {
+      y -= 14;
+      empty('No medications listed in My Medications.');
+    }
+    y += 14;
+  }
+
+  /* daily tracker */
+  if (r.tracker) {
+    title('Daily symptom tracker');
+    y += 14;
+    if (r.tracker.days) {
+      const parts = Object.entries(r.tracker.avgs).map(([k, v]) => k + ' avg ' + v + '/10');
+      parts.push(plural(r.tracker.days, 'day') + ' logged');
+      if (r.tracker.rashDays) parts.push('rash on ' + plural(r.tracker.rashDays, 'day'));
+      para(parts.join('  ·  '), { size: 9, color: INK });
+      if (r.tracker.notes.length) {
+        y += 4;
+        for (const n of r.tracker.notes) para(fmtShort(n.date) + ': ' + n.text, { maxLines: 2 });
+      }
+    } else {
+      y -= 14;
+      empty('No tracker entries in this period.');
+    }
+    y += 14;
+  }
+
+  /* weather and symptoms */
+  if (r.weather) {
+    title('Weather and symptoms' + (r.weather.place ? ' — ' + r.weather.place : ''));
+    y += 14;
+    for (const l of r.weather.lines) para(l.trim(), { color: l.startsWith('  ') ? SUB : INK });
+    para('Associations within the patient’s own records, not evidence of cause.', { size: 7 });
+    y += 14;
+  }
+
+  /* flare photos (only those the patient marked for sharing) */
+  if (r.photos && r.photos.length) {
+    const gap = 12, cw = (W - 2 * gap) / 3, ch = cw * 0.75, rowH = ch + 30;
+    ensure(rowH + 24);
+    title('Flare photos');
+    y += 10;
+    r.photos.forEach((p, i) => {
+      const col = i % 3;
+      if (col === 0 && i) y += rowH;
+      if (col === 0) ensure(rowH);
+      const x = M + col * (cw + gap);
+      const k = Math.min(cw / p.w, ch / p.h), w = p.w * k, h = p.h * k;
+      doc.setFillColor('#f3f5f9'); doc.rect(x, y, cw, ch, 'F');
+      doc.addImage(p.dataUrl, 'JPEG', x + (cw - w) / 2, y + (ch - h) / 2, w, h);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(INK);
+      doc.text(doc.splitTextToSize(fmtShort(p.date) + ' · ' + signLabel(p.sign), cw)[0], x, y + ch + 10);
+      if (p.note) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(SUB);
+        doc.text(doc.splitTextToSize(p.note, cw)[0], x, y + ch + 20);
+      }
+    });
+    y += rowH;
+  }
+
+  /* footer, on every page */
+  const pages = doc.getNumberOfPages();
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(LINE); doc.setLineWidth(1); doc.line(M, 742, M + W, 742);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(SUB);
+    doc.text('Patient-entered data for discussion with the care team. Not a medical record and not medical advice. ' +
+      'RheumCompanion · from the author of The Resilient Path.', M, 754);
+    if (pages > 1) doc.text('Page ' + p + ' of ' + pages, M + W, 766, { align: 'right' });
+  }
 
   return doc;
-}
-
-/* ---------- export: share sheet on native, download on web ---------- */
-export async function exportFlowsheet() {
-  const doc = buildFlowsheetPdf();
-  const fname = 'RheumCompanion-Flowsheet-' +
-    new Date().toISOString().slice(0, 10) + '.pdf';
-
-  let isNative = false;
-  try {
-    const { Capacitor } = await import('@capacitor/core');
-    isNative = Capacitor.isNativePlatform();
-  } catch { /* web build without capacitor core */ }
-
-  if (isNative) {
-    /* Write to app cache, then open the OS share sheet: the patient
-       chooses Files, iCloud, Drive, email, print — their storage. */
-    const { Filesystem, Directory } = await import('@capacitor/filesystem');
-    const { Share } = await import('@capacitor/share');
-    const base64 = doc.output('datauristring').split(',')[1];
-    const file = await Filesystem.writeFile({
-      path: fname, data: base64, directory: Directory.Cache,
-    });
-    await Share.share({
-      title: 'RheumCompanion flowsheet',
-      text: 'My symptom flowsheet for my next appointment.',
-      url: file.uri,
-      dialogTitle: 'Save or send your flowsheet',
-    });
-  } else {
-    doc.save(fname);   // browser download
-  }
-  return fname;
 }
