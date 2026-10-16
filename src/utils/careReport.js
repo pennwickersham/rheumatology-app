@@ -6,7 +6,9 @@
    device; nothing is sent anywhere until the patient picks a destination
    in the share sheet.
    ===================================================================== */
-import { getScoresEntries, getJointEntries, fmtStiffMin, jointLabel, JOINTS_28 } from './assessments';
+import { getScoresEntries, getJointEntries, fmtStiffMin, jointLabel, jointPattern, JOINTS_28, JOINTS_68 } from './assessments';
+import { weatherReportLines, getWeatherPrefs } from './weather';
+import { photosForReport, photoCount } from './photoVault';
 import { getTrackerData } from './tracker';
 import { getMyMeds } from './myMeds';
 import { getMedicationById } from '../data/medications';
@@ -24,12 +26,14 @@ export const REPORT_RANGES = [
 
 export const REPORT_SECTIONS = [
   { id: 'scores', label: 'Symptom scores', hint: 'pain, global, fatigue, morning stiffness' },
-  { id: 'joints', label: 'Joint counts', hint: 'tender and swollen, 28-joint map' },
+  { id: 'joints', label: 'Joint counts', hint: 'tender and swollen, 28- or 68-joint map' },
   { id: 'meds', label: 'Medications', hint: 'schedule, doses, injection sites, holds' },
   { id: 'tracker', label: 'Daily tracker', hint: 'averages, rash days, your notes' },
+  { id: 'photos', label: 'Flare photos', hint: 'photos you marked to share, PDF only' },
+  { id: 'weather', label: 'Weather and symptoms', hint: 'pressure, humidity and pain patterns' },
 ];
 
-const ALL = { scores: true, joints: true, meds: true, tracker: true };
+const ALL = { scores: true, joints: true, meds: true, tracker: true, photos: true, weather: true };
 const PREFS_KEY = 'care_report_prefs';
 
 // The note and choices are remembered as a draft so a patient can add to them before the visit.
@@ -51,8 +55,15 @@ const plural = (n, word) => n + ' ' + word + (n === 1 ? '' : 's');
 const round1 = n => Math.round(n * 10) / 10;
 const isoDay = iso => toKey(new Date(iso));
 
+// Joint counts for an entry in its own set: 28, or 68 tender / 66 swollen.
+export function jointCountText(e) {
+  return e.set === 68 ? `tender ${e.tjc68}/68, swollen ${e.sjc66}/66 (28-joint: ${e.tjc28}/${e.sjc28})` : `tender ${e.tjc28}/28, swollen ${e.sjc28}/28`;
+}
+
+export const entryPattern = e => jointPattern(e.joints || {}, e.set || 28);
+
 function jointSummary(entry) {
-  return JOINTS_28.filter(j => entry.joints[j] && (entry.joints[j].t || entry.joints[j].s))
+  return (entry.set === 68 ? JOINTS_68 : JOINTS_28).filter(j => entry.joints[j] && (entry.joints[j].t || entry.joints[j].s))
     .map(j => jointLabel(j) + (entry.joints[j].t && entry.joints[j].s ? ' (T+S)' : entry.joints[j].t ? ' (T)' : ' (S)'));
 }
 
@@ -117,7 +128,20 @@ export function collectReport({ days = 30, include = ALL, note = '' } = {}) {
     joints: include.joints ? joints : null,
     meds: include.meds ? collectMeds(since, days) : null,
     tracker: include.tracker ? collectTracker(since) : null,
+    weather: include.weather ? weatherReportLines(days) : null,
+    photos: null,        // filled in by attachPhotos() (photos live in IndexedDB, which is async)
+    photoCount: 0,
+    wantPhotos: !!include.photos,
   };
+}
+
+export async function attachPhotos(r, { images = true } = {}) {
+  if (!r.wantPhotos) return r;
+  try {
+    r.photoCount = await photoCount(r.since);
+    if (images) r.photos = await photosForReport(r.since);
+  } catch { /* photo storage unavailable: leave the section out */ }
+  return r;
 }
 
 // What's available, so the share screen can show counts next to each section.
@@ -128,6 +152,8 @@ export function sectionCounts(days) {
     joints: plural(r.joints.length, 'joint map'),
     meds: plural(r.meds.rows.length, 'medication'),
     tracker: plural(r.tracker.days, 'day') + ' logged',
+    photos: '',
+    weather: getWeatherPrefs().enabled ? getWeatherPrefs().place : 'off (turn on in Weather & Symptoms)',
   };
 }
 
@@ -151,11 +177,14 @@ export function reportToText(r) {
   }
 
   if (r.joints) {
-    head('Joint counts (28-joint set)');
+    head('Joint counts');
     if (!r.joints.length) L.push('No joint maps in this period.');
-    r.joints.slice(-6).forEach(e => L.push(`${fmtShort(isoDay(e.date))}: tender ${e.tjc28}, swollen ${e.sjc28}`));
+    r.joints.slice(-6).forEach(e => L.push(`${fmtShort(isoDay(e.date))}: ${jointCountText(e)}`));
     const latest = r.joints[r.joints.length - 1];
-    if (latest && jointSummary(latest).length) L.push('Latest: ' + jointSummary(latest).join(', '));
+    if (latest) {
+      L.push('Latest pattern: ' + entryPattern(latest).text);
+      if (jointSummary(latest).length) L.push('Latest joints: ' + jointSummary(latest).join(', '));
+    }
   }
 
   if (r.meds) {
@@ -182,6 +211,16 @@ export function reportToText(r) {
     }
   }
 
+  if (r.weather) {
+    head('Weather and symptoms' + (r.weather.place ? ` (${r.weather.place})` : ''));
+    r.weather.lines.forEach(l => L.push(l));
+  }
+
+  if (r.wantPhotos && r.photoCount) {
+    head('Flare photos');
+    L.push(`${plural(r.photoCount, 'photo')} in this period. Photos are included in the PDF version only.`);
+  }
+
   L.push('');
   L.push('Shared from the RheumCompanion app.');
   return L.join('\n');
@@ -197,7 +236,7 @@ async function isNative() {
 
 // Returns 'shared' (share sheet opened), 'copied' (web clipboard) or 'manual' (clipboard blocked).
 export async function shareReportText(r) {
-  const text = reportToText(r);
+  const text = reportToText(await attachPhotos(r, { images: false }));
   if (await isNative()) {
     const { Share } = await import('@capacitor/share');
     await Share.share({ title: 'My RheumCompanion summary', text, dialogTitle: 'Send to your care team' });
@@ -213,7 +252,7 @@ export async function shareReportText(r) {
 
 export async function shareReportPdf(r) {
   const { buildFlowsheetPdf } = await import('./flowsheet');
-  const doc = buildFlowsheetPdf(r);
+  const doc = buildFlowsheetPdf(await attachPhotos(r));
   const fname = 'RheumCompanion-Summary-' + r.generated + '.pdf';
   if (await isNative()) {
     /* Write to app cache, then open the OS share sheet: the patient

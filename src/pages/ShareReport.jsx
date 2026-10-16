@@ -3,6 +3,8 @@ import {
   REPORT_RANGES, REPORT_SECTIONS, getReportPrefs, saveReportPrefs, sectionCounts,
   collectReport, reportToText, shareReportPdf, shareReportText,
 } from '../utils/careReport';
+import { photoCount } from '../utils/photoVault';
+import { addDays, todayKey } from '../utils/medSchedule';
 
 const labelStyle = { fontSize: 'var(--font-sm)', fontWeight: 700, color: 'var(--text-primary)', display: 'block', marginBottom: '8px' };
 const mutedStyle = { fontSize: 'var(--font-xs)', color: 'var(--text-muted)' };
@@ -34,6 +36,13 @@ export default function ShareReport() {
   };
 
   const counts = useMemo(() => sectionCounts(prefs.days), [prefs.days]);
+  const [photoN, setPhotoN] = useState(null);
+  useEffect(() => {
+    let live = true;
+    photoCount(addDays(todayKey(), -prefs.days)).then(n => live && setPhotoN(n)).catch(() => live && setPhotoN(0));
+    return () => { live = false; };
+  }, [prefs.days]);
+  const shown = { ...counts, photos: photoN == null ? '…' : `${photoN} photo${photoN === 1 ? '' : 's'} to share` };
   const report = () => collectReport(prefs);
   const nothingSelected = !Object.values(prefs.include).some(Boolean) && !prefs.note.trim();
 
@@ -86,7 +95,7 @@ export default function ShareReport() {
             />
             <span>
               <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-primary)', fontWeight: 600 }}>{s.label}</span>
-              <span style={{ ...mutedStyle, display: 'block' }}>{s.hint}{' · '}{counts[s.id]}</span>
+              <span style={{ ...mutedStyle, display: 'block' }}>{s.hint}{' · '}{shown[s.id]}</span>
             </span>
           </label>
         ))}
@@ -150,7 +159,7 @@ export default function ShareReport() {
           border: '1px solid var(--border, rgba(255,255,255,.1))', borderRadius: '10px', padding: 'var(--space-md)',
           marginTop: 'var(--space-sm)', maxHeight: '420px', overflowY: 'auto',
         }}>
-          {reportToText(report())}
+          {reportToText({ ...report(), photoCount: photoN || 0 })}
         </pre>
       )}
 

@@ -9,7 +9,7 @@ import JointMap from '../components/JointMap';
 import { ReviewedBadge, BrandFooter } from '../components/ReviewedBadge';
 import {
   getScoresEntries, deleteScoresEntry, fmtStiffMin,
-  getJointEntries, deleteJointEntry,
+  getJointEntries, deleteJointEntry, jointPattern,
 } from '../utils/assessments';
 
 const fmt = iso => new Date(iso).toLocaleDateString(undefined,
@@ -114,14 +114,15 @@ export default function Assessments() {
             {jm.length ? (
               <table>
                 <thead><tr>
-                  <th>Date</th><th>Tender (28)</th><th>Swollen (28)</th><th></th>
+                  <th>Date</th><th>Tender</th><th>Swollen</th><th>Pattern</th><th></th>
                 </tr></thead>
                 <tbody>
                   {jm.slice(-10).reverse().map(e => (
                     <tr key={e.id}>
                       <td>{fmt(e.date)}</td>
-                      <td className="num">{e.tjc28}</td>
-                      <td className="num">{e.sjc28}</td>
+                      <td className="num">{e.set === 68 ? `${e.tjc68}/68` : `${e.tjc28}/28`}</td>
+                      <td className="num">{e.set === 68 ? `${e.sjc66}/66` : `${e.sjc28}/28`}</td>
+                      <td style={{ fontSize: '11px' }}>{jointPattern(e.joints || {}, e.set || 28).extent}</td>
                       <td><button type="button" className="del" aria-label="Delete entry"
                         onClick={() => { deleteJointEntry(e.id); refresh(); }}>🗑</button></td>
                     </tr>
