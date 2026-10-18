@@ -60,9 +60,9 @@ function DisclaimerModal({ onAccept, onDecline }) {
               Never disregard professional medical advice or delay seeking it because of something you have read in this app.
             </p>
             <div style={{ padding: 'var(--space-md)', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-lg)' }}>
-              <strong style={{ display: 'block', marginBottom: 'var(--space-xs)' }}>Privacy & Cookies</strong>
+              <strong style={{ display: 'block', marginBottom: 'var(--space-xs)' }}>Privacy</strong>
               <p style={{ marginBottom: 0, fontSize: '0.9em' }}>
-                Rheum Companion uses local device storage ("cookies") to securely save your profile, personalize your experience, and track basic app usage. By using this app, you consent to our use of these tracking technologies.
+                Rheum Companion saves your data and settings on your device only. Nothing is used for tracking or advertising. See our Privacy Policy for what online features such as RheumBot send.
               </p>
             </div>
           </div>
