@@ -576,7 +576,7 @@ const Paywall = ({ onClose }) => {
             marginTop: '12px'
           }}>
             <a
-              href="https://pennwickersham.github.io/rheumatology-app/privacy.html"
+              href="https://www.rheumcompanion.com/privacy.html"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: 'var(--accent-primary)', fontSize: '10px', textDecoration: 'underline' }}
