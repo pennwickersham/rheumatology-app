@@ -15,6 +15,7 @@ const quickLinks = [
   { iconName: 'microscope', title: 'Clinical Trials', subtitle: 'Find active studies', path: '/clinical-trials', color: '#a855f7' },
   { iconName: 'search', title: 'Symptom Lookup', subtitle: 'Symptom vs side effect', path: '/symptom-lookup', color: '#f59e0b' },
   { iconName: 'clipboard', title: 'Clinic Visit', subtitle: 'Maximize your visit', path: '/clinic-visit', color: '#10b981' },
+  { iconName: 'file', title: 'Labs & Imaging', subtitle: 'Store results and scans', path: '/documents', color: '#0ea5e9' },
   { iconName: 'phone', title: 'When to Call', subtitle: 'Urgency guidance', path: '/when-to-call', color: '#ef4444' },
   { iconName: 'chat', title: 'Ask RheumBot', subtitle: 'AI-powered Q&A', path: '/chatbot', color: '#3b82f6', gated: true },
 ];

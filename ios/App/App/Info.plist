@@ -47,5 +47,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo of a lab report, test result or scan to keep it with your health records on this device.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose photos of lab reports, test results or scans to keep with your health records on this device.</string>
 </dict>
 </plist>

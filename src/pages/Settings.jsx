@@ -137,7 +137,7 @@ export default function Settings() {
       <div className="card glass-morphism" style={{ padding: 'var(--space-lg)', display: 'block' }}>
         <h2 style={{ fontSize: 'var(--font-lg)', marginBottom: 'var(--space-sm)' }}>Backup and restore</h2>
         <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 'var(--space-md)' }}>
-          Your symptom tracker, scores, medication list, and checklists live only on this device. Create a backup before changing phones or reinstalling the app.
+          Your symptom tracker, scores, medication list, and checklists live only on this device. Create a backup before changing phones or reinstalling the app. Uploaded lab and imaging files are not included, so keep your originals.
         </p>
         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
           <button className="btn" onClick={onExport}>Create backup</button>

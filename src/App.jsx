@@ -22,6 +22,7 @@ import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
 const MyMedications = lazy(() => import('./pages/MyMedications'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Documents = lazy(() => import('./pages/Documents'));
 
 // Re-show the medical disclaimer only after the app has been away this long
 const DISCLAIMER_REPROMPT_MS = 30 * 60 * 1000;
@@ -203,6 +204,7 @@ export default function App() {
                   <Route path="/assessments" element={<Assessments />} />
                   <Route path="/my-medications" element={<MyMedications />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/documents" element={<Documents />} />
                 </Routes>
                 </Suspense>
               </Layout>
