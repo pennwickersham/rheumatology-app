@@ -211,7 +211,16 @@ export async function exportFlowsheet() {
   const doc = buildFlowsheetPdf();
   const fname = 'RheumCompanion-Flowsheet-' +
     new Date().toISOString().slice(0, 10) + '.pdf';
+  await sharePdf(doc, fname, {
+    title: 'RheumCompanion flowsheet',
+    text: 'My symptom flowsheet for my next appointment.',
+    dialogTitle: 'Save or send your flowsheet',
+  });
+  return fname;
+}
 
+/* Hand a jsPDF document to the patient. Shared by every PDF the app makes. */
+export async function sharePdf(doc, fname, { title, text, dialogTitle }) {
   let isNative = false;
   try {
     const { Capacitor } = await import('@capacitor/core');
@@ -227,14 +236,8 @@ export async function exportFlowsheet() {
     const file = await Filesystem.writeFile({
       path: fname, data: base64, directory: Directory.Cache,
     });
-    await Share.share({
-      title: 'RheumCompanion flowsheet',
-      text: 'My symptom flowsheet for my next appointment.',
-      url: file.uri,
-      dialogTitle: 'Save or send your flowsheet',
-    });
+    await Share.share({ title, text, url: file.uri, dialogTitle });
   } else {
     doc.save(fname);   // browser download
   }
-  return fname;
 }

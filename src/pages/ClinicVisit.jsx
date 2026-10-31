@@ -1,11 +1,29 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { clinicVisitSections, sampleQuestions } from '../data/clinicVisit';
 import { saveToStorage, loadFromStorage } from '../utils/storage';
 import { Icon } from '../components/Icons';
+import { exportAppointmentPdf } from '../utils/appointmentPdf';
 
 export default function ClinicVisit() {
   const [expandedSections, setExpandedSections] = useState({ 'before-visit': true });
   const [checkedItems, setCheckedItems] = useState(() => loadFromStorage('clinic_checklist', {}));
+  const navigate = useNavigate();
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState('');
+
+  const onExport = async () => {
+    setExporting(true); setExportMsg('');
+    try {
+      await exportAppointmentPdf();
+      setExportMsg('Summary ready — choose where to save or send it.');
+    } catch (e) {
+      console.error(e);
+      setExportMsg('Export failed: ' + (e.message || 'unknown error'));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     saveToStorage('clinic_checklist', checkedItems);
@@ -88,6 +106,25 @@ export default function ClinicVisit() {
             Reset Preparation
           </button>
         )}
+      </div>
+
+      {/* Appointment summary PDF */}
+      <div className="card glass-morphism stagger-item" style={{ padding: 'var(--space-lg)', display: 'block', marginBottom: 'var(--space-xl)' }}>
+        <div style={{ fontSize: 'var(--font-sm)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2px' }}>Export for my appointment</div>
+        <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 'var(--space-md)' }}>
+          A PDF of your medications, last 30 days of symptoms and flares, notes, scores, and uploaded labs and imaging. Made on your device.
+        </p>
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+          <button className="btn btn--primary btn--sm" onClick={onExport} disabled={exporting} style={{ borderRadius: 'var(--radius-md)' }}>
+            <Icon name="share" size={14} />
+            {exporting ? 'Building PDF…' : 'Create PDF'}
+          </button>
+          <button className="btn btn--outline btn--sm" onClick={() => navigate('/documents')} style={{ borderRadius: 'var(--radius-md)' }}>
+            <Icon name="file" size={14} />
+            Labs &amp; Imaging
+          </button>
+        </div>
+        {exportMsg && <p role="status" style={{ fontSize: 'var(--font-xs)', marginTop: 'var(--space-md)', color: 'var(--text-secondary)' }}>{exportMsg}</p>}
       </div>
 
       {/* Preparation Sections */}

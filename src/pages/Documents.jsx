@@ -5,6 +5,7 @@ import {
   DOCUMENT_TYPES, ACCEPTED_TYPES, getDocuments, addDocument, deleteDocument, getDocumentData,
   base64ToBlob, shareDocument, typeLabel, isImage, isPdf, formatDocDate, todayLocal,
 } from '../utils/documents';
+import { exportAppointmentPdf } from '../utils/appointmentPdf';
 
 const TYPE_COLORS = { lab: '#06b6d4', test: '#8b5cf6', imaging: '#f59e0b' };
 
@@ -90,6 +91,8 @@ export default function Documents() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [viewing, setViewing] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState('');
 
   const onPick = (e) => {
     const f = e.target.files?.[0] || null;
@@ -120,6 +123,19 @@ export default function Documents() {
     if (!window.confirm(`Delete "${d.title}" from this device?`)) return;
     await deleteDocument(d.id);
     setList(getDocuments());
+  };
+
+  const onExport = async () => {
+    setExporting(true); setExportMsg('');
+    try {
+      await exportAppointmentPdf();
+      setExportMsg('Summary ready — choose where to save or send it.');
+    } catch (e) {
+      console.error(e);
+      setExportMsg('Export failed: ' + (e.message || 'unknown error'));
+    } finally {
+      setExporting(false);
+    }
   };
 
   const labelStyle = { display: 'block', fontSize: 'var(--font-xs)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' };
@@ -207,8 +223,19 @@ export default function Documents() {
         </div>
       )}
 
+      <div className="card glass-morphism" style={{ padding: 'var(--space-lg)', display: 'block' }}>
+        <h2 style={{ fontSize: 'var(--font-lg)', marginBottom: 'var(--space-sm)' }}>Appointment summary</h2>
+        <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 'var(--space-md)' }}>
+          Create a PDF with your medications, the last 30 days of your symptom tracker, your scores, and this list of results (photos included).
+        </p>
+        <button className="btn btn--primary btn--full" onClick={onExport} disabled={exporting}>
+          <Icon name="share" size={16} /> {exporting ? 'Building PDF…' : 'Export for my appointment'}
+        </button>
+        {exportMsg && <p role="status" style={{ fontSize: 'var(--font-sm)', marginTop: 'var(--space-md)', color: 'var(--text-secondary)' }}>{exportMsg}</p>}
+      </div>
+
       <p style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-lg)', lineHeight: 1.5 }}>
-        Files you add stay on this device and are never uploaded by the app. They leave your phone only when you choose to share them. Uploaded files are not included in Settings backups.
+        Files you add stay on this device and are never uploaded by the app. They leave your phone only when you choose to share them or an appointment PDF. Uploaded files are not included in Settings backups.
       </p>
 
       {viewing && <DocumentViewer doc={viewing} onClose={() => setViewing(null)} />}
