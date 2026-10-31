@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navig
 import { App as CapacitorApp } from '@capacitor/app';
 import { Dialog } from '@capacitor/dialog';
 import { useAuth } from './context/AuthContext';
+import { listenForNotificationTaps, ensureCheckinReminder } from './utils/checkinReminder';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -119,6 +120,16 @@ function HardwareBackButton() {
   return null;
 }
 
+// Tapping a reminder notification opens the screen it points to (e.g. the tracker)
+function NotificationTapHandler() {
+  const navigate = useNavigate();
+
+  useEffect(() => listenForNotificationTaps(route => navigate(route)), [navigate]);
+  useEffect(() => { ensureCheckinReminder(); }, []);
+
+  return null;
+}
+
 // Protected Route Wrapper
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -164,6 +175,7 @@ export default function App() {
       {showDisclaimer && <DisclaimerModal onAccept={() => setDisclaimerAccepted(true)} onDecline={handleDecline} />}
       <Router>
         <HardwareBackButton />
+        <NotificationTapHandler />
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Layout><Login /></Layout>} />
