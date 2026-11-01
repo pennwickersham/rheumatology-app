@@ -27,7 +27,7 @@
 npm install
 npm run dev
 ```
-Open `http://localhost:5173` in a browser.
+Open `http://localhost:5173/app.html` in a browser (the dev server opens it for you). The root `/` is the public landing page.
 
 ### Build for Production
 ```bash
@@ -116,7 +116,8 @@ rheumatology-app/
 │   ├── index.css             # Full design system (tokens, components)
 │   └── main.jsx              # React entry point
 ├── capacitor.config.json     # Capacitor native config
-├── index.html                # HTML entry point
+├── app.html                  # App entry point (built as dist/index.html)
+├── index.html                # Public landing page (GitHub Pages), not part of the app
 ├── package.json              # Dependencies & scripts
 ├── vite.config.js            # Vite bundler configuration
 └── rheumcompanion.apk        # Pre-built Android debug APK
